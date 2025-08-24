@@ -1,3 +1,34 @@
+# 🌍 ReliefConnect
+
+Hi there! 👋  
+This is my **Final Year Project (FYP)** called **ReliefConnect** 💡✨  
+
+🚀 A platform to connect NGOs and people who want to help during disasters.  
+💖 Built with Next.js, Tailwind, and a sprinkle of ShadCN magic.  
+
+---
+
+## 🎯 Features (so far...)
+- Simple & clean UI
+- Easy navigation
+- A place to start building something meaningful
+
+---
+
+## 🛠️ Tech Stack
+- Next.js ⚡
+- TailwindCSS 🎨
+
+---
+
+## 💬 Notes
+Still a work in progress — but every little step counts! 🌱  
+Stay tuned for updates 🌟
+
+---
+
+## EXTRAS
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
