@@ -10,8 +10,8 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="min-h-screen py-20 md:py-32 bg-gradient-to-b from-blue-900 to-blue-300 text-white">
-        <div className="container p-6 grid lg:grid-cols-2 gap-2 items-center">
+      <section className="flex items-center justify-center w-full min-h-screen py-20 md:py-32 bg-gradient-to-b from-blue-900 to-blue-300 text-white">
+        <div className="container bg-amber-700 p-6 grid lg:grid-cols-2 gap-2 items-center justify-center">
           <div className="space-y-6">
             <h1 className="text-5xl md:text-6xl font-extrabold leading-tight tracking-tight">
               Connecting Hearts for Malaysian Disaster Relief
@@ -46,8 +46,8 @@ export default function Home() {
       </section>
 
       {/* Active Campaigns Section */}
-      <section className="w-full py-12 md:py-24 bg-white">
-        <div className="container px-4 md:px-6">
+      <section className="w-full py-12 md:py-24 bg-white flex items-center justify-center">
+        <div className="container bg-amber-400 items-center justify-center px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Active Relief Campaigns</h2>
@@ -194,6 +194,123 @@ export default function Home() {
         </div>
       </section>
 
+
+      {/* Explanation Section */}
+      <section className="w-full py-12 md:py-24 bg-gray-50 flex items-center justify-center">
+        <div className="container bg-amber-400 px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">How ReliefConnect Works</h2>
+              <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Our platform connects verified NGOs with donors to ensure efficient disaster relief in Malaysia.
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3 mt-12">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                <Shield className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold">NGO Verification</h3>
+                <p className="text-gray-500">
+                  We verify all NGOs on our platform to ensure your donations reach legitimate organizations.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                <Heart className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold">Transparent Donations</h3>
+                <p className="text-gray-500">
+                  Track your donations and see the real-time impact of your contribution on affected communities.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                <CheckCircle className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold">Secure Payments</h3>
+                <p className="text-gray-500">
+                  Our secure payment gateway ensures your donations are processed safely and reach the intended
+                  campaigns.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* CTA Section */}
+      <section className="w-full py-12 md:py-24 bg-blue-600 text-white flex items-center justify-center">
+        <div className="container px-4 md:px-6">
+          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
+            <div className="flex flex-col justify-center space-y-4">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Join the Relief Effort</h2>
+                <p className="max-w-[600px] text-blue-100 md:text-xl">
+                  Whether you're an NGO working on disaster relief or a donor looking to help, ReliefConnect makes it
+                  easy to make a difference.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                <Button variant="secondary" size="lg" asChild>
+                  <Link href="/donate">Donate Now</Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="bg-transparent text-white border-white hover:bg-blue-700"
+                  size="lg"
+                  asChild
+                >
+                  <Link href="/ngo/register">Register as NGO</Link>
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-blue-700 p-6 rounded-lg">
+                <h3 className="text-xl font-bold mb-2">For Donors</h3>
+                <ul className="space-y-2">
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 h-5 w-5 text-blue-300 mt-0.5" />
+                    <span>Browse campaigns by disaster type, location, or urgency</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 h-5 w-5 text-blue-300 mt-0.5" />
+                    <span>Make secure monetary donations to verified NGOs</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 h-5 w-5 text-blue-300 mt-0.5" />
+                    <span>Track donation impact via real-time updates</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-blue-700 p-6 rounded-lg">
+                <h3 className="text-xl font-bold mb-2">For NGOs</h3>
+                <ul className="space-y-2">
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 h-5 w-5 text-blue-300 mt-0.5" />
+                    <span>Create and manage disaster relief campaigns</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 h-5 w-5 text-blue-300 mt-0.5" />
+                    <span>Receive secure donations and provide updates</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 h-5 w-5 text-blue-300 mt-0.5" />
+                    <span>Build trust with donors through verification</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
     </div>
   );
