@@ -10,81 +10,39 @@ import { AlertTriangle, CheckCircle, Clock, Filter, Search } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function CampaignsPage() {
     const router = useRouter()
+    const [campaigns, setCampaigns] = useState([])
 
-    const campaigns = [
-        {
-        id: "1",
-        title: "Pahang Flood Relief",
-        description:
-            "Supporting communities affected by severe flooding in Pahang state with emergency supplies and shelter.",
-        raised: 70000,
-        goal: 100000,
-        imageUrl: "/placeholder.svg?height=200&width=400",
-        status: "Urgent",
-        ngoVerified: true,
-        type: "flood",
-        },
-        {
-        id: "2",
-        title: "Cameron Highlands Landslide Recovery",
-        description: "Providing aid to families displaced by recent landslides in the Cameron Highlands region.",
-        raised: 45000,
-        goal: 100000,
-        imageUrl: "/placeholder.svg?height=200&width=400",
-        ngoVerified: true,
-        type: "landslide",
-        },
-        {
-        id: "3",
-        title: "Kelantan Drought Response",
-        description:
-            "Delivering clean water and essential supplies to communities affected by severe drought in Kelantan.",
-        raised: 25000,
-        goal: 100000,
-        imageUrl: "/placeholder.svg?height=200&width=400",
-        status: "Critical",
-        ngoVerified: true,
-        type: "drought",
-        },
-        {
-        id: "4",
-        title: "Sabah Forest Fire Recovery",
-        description: "Supporting communities and wildlife affected by forest fires in Sabah.",
-        raised: 60000,
-        goal: 100000,
-        imageUrl: "/placeholder.svg?height=200&width=400",
-        ngoVerified: true,
-        type: "fire",
-        },
-        {
-        id: "5",
-        title: "Selangor Haze Relief",
-        description: "Providing air purifiers and medical assistance to vulnerable communities affected by severe haze.",
-        raised: 35000,
-        goal: 100000,
-        imageUrl: "/placeholder.svg?height=200&width=400",
-        ngoVerified: true,
-        type: "haze",
-        },
-        {
-        id: "6",
-        title: "Terengganu Coastal Community Support",
-        description: "Helping fishing communities affected by coastal erosion and rising sea levels in Terengganu.",
-        raised: 15000,
-        goal: 100000,
-        imageUrl: "/placeholder.svg?height=200&width=400",
-        status: "Urgent",
-        ngoVerified: true,
-        type: "erosion",
-        },
-    ]
+    useEffect(() => {
+        const fetchCampaigns = async () => {
+            const { data, error } = await supabase
+                .from("campaigns")
+                .select("*")
 
+            if (data) {
+                const mapped = data.map((c) => ({
+                    id: c.id,
+                    title: c.title,
+                    description: c.description,
+                    raised: Number(c.raised ?? 0),
+                    goal: Number(c.goal ?? 0),
+                    imageUrl: c.image_url ?? c.image ?? "/placeholder.svg",
+                    status: c.urgency === "critical" ? "Critical" : c.urgency === "urgent" ? "Urgent" : undefined,
+                    ngoVerified: Boolean(c.verified),
+                    type: c.disaster,
+                }))
+                setCampaigns(mapped)
+            }
+        }
+        fetchCampaigns()
+    }, [])
 
   return (
-        <div className="container mx-auto w-full bg-amber-400 px-4 md:px-6 py-8 md:py-12">
+        <div className="container mx-auto w-full px-4 md:px-6 py-8 md:py-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
             <h1 className="text-3xl font-bold mb-2">Disaster Relief Campaigns</h1>

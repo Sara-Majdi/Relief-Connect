@@ -11,7 +11,7 @@ export default function Home() {
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="flex items-center justify-center w-full min-h-screen py-20 md:py-32 bg-gradient-to-b from-blue-900 to-blue-300 text-white">
-        <div className="container bg-amber-700 p-6 grid lg:grid-cols-2 gap-2 items-center justify-center">
+        <div className="container p-6 grid lg:grid-cols-2 gap-2 items-center justify-center">
           <div className="space-y-6">
             <h1 className="text-5xl md:text-6xl font-extrabold leading-tight tracking-tight">
               Connecting Hearts for Malaysian Disaster Relief
@@ -47,7 +47,7 @@ export default function Home() {
 
       {/* Active Campaigns Section */}
       <section className="w-full py-12 md:py-24 bg-white flex items-center justify-center">
-        <div className="container bg-amber-400 items-center justify-center px-4 md:px-6">
+        <div className="container items-center justify-center px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Active Relief Campaigns</h2>
@@ -197,7 +197,7 @@ export default function Home() {
 
       {/* Explanation Section */}
       <section className="w-full py-12 md:py-24 bg-gray-50 flex items-center justify-center">
-        <div className="container bg-amber-400 px-4 md:px-6">
+        <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">How ReliefConnect Works</h2>

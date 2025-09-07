@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,12 +22,13 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function CampaignDetailPage({ params }) {
   const [activeTab, setActiveTab] = useState("overview")
 
-  // Mock campaign data - TO BE UPDATE (this would be fetched based on params.id)
-  const campaign = {
+  // Default campaign data shown until Supabase loads
+  const defaultCampaign = {
     id: params.id,
     title: "Pahang Flood Relief",
     ngo: "Malaysian Relief Foundation",
@@ -42,7 +43,7 @@ Our comprehensive relief effort focuses on three key areas:
 
 Your donations will directly support affected families through verified distribution channels, ensuring aid reaches those who need it most.`,
     image: "/campaigns/pahang-flood.jpg",
-    raised: 70000,
+    raised: 50000,
     goal: 100000,
     donors: 234,
     urgency: "urgent",
@@ -120,6 +121,45 @@ Your donations will directly support affected families through verified distribu
       { category: "Administrative", allocated: 10000, spent: 5000 },
     ],
   }
+
+  const [campaign, setCampaign] = useState(defaultCampaign)
+
+  useEffect(() => {
+    const fetchCampaign = async () => {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .select("*")
+        .eq("id", params.id)
+        .single()
+
+      if (data) {
+        const mapped = {
+          id: data.id ?? params.id,
+          title: data.title ?? defaultCampaign.title,
+          ngo: data.ngo ?? data.organizer ?? defaultCampaign.ngo,
+          description: data.description ?? defaultCampaign.description,
+          longDescription: data.long_description ?? data.longDescription ?? defaultCampaign.longDescription,
+          image: data.image_url ?? data.image ?? defaultCampaign.image,
+          raised: data.raised ?? defaultCampaign.raised,
+          goal: data.goal ?? defaultCampaign.goal,
+          donors: data.donors ?? defaultCampaign.donors,
+          urgency: data.urgency ?? defaultCampaign.urgency,
+          disaster: data.disaster ?? defaultCampaign.disaster,
+          state: data.state ?? defaultCampaign.state,
+          verified: data.verified ?? defaultCampaign.verified,
+          startDate: data.start_date ?? data.startDate ?? defaultCampaign.startDate,
+          targetDate: data.target_date ?? data.targetDate ?? defaultCampaign.targetDate,
+          location: data.location ?? defaultCampaign.location,
+          beneficiaries: data.beneficiaries ?? defaultCampaign.beneficiaries,
+          updates: data.updates ?? defaultCampaign.updates,
+          neededItems: data.needed_items ?? defaultCampaign.neededItems,
+          financialBreakdown: data.financial_breakdown ?? defaultCampaign.financialBreakdown,
+        }
+        setCampaign({ ...defaultCampaign, ...mapped })
+      }
+    }
+    fetchCampaign()
+  }, [params.id])
 
   const getStatusBadge = (status) => {
     switch (status) {
