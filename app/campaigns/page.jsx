@@ -56,7 +56,7 @@ export default function CampaignsPage() {
                 <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                 <SelectItem value="newest">Newest First</SelectItem>
                 <SelectItem value="urgent">Most Urgent</SelectItem>
                 <SelectItem value="progress">Progress</SelectItem>

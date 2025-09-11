@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { supabase } from "@/lib/supabaseClient"
 import {
   Dialog,
   DialogContent,
@@ -467,16 +468,60 @@ export default function NGODashboard() {
 }
 
 function CreateCampaignForm({ onClose }) {
+    const [title, setTitle] = useState("")
+    const [disaster, setDisaster] = useState("")
+    const [description, setDescription] = useState("")
+    const [goal, setGoal] = useState("")
+    const [urgency, setUrgency] = useState("")
+    const [submitting, setSubmitting] = useState(false)
+    const [error, setError] = useState("")
+
+    const handleCreate = async () => {
+      setError("")
+      if (!title || !description || !goal || !disaster || !urgency) {
+        setError("Please fill in all fields")
+        return
+      }
+      const numericGoal = Number(goal)
+      if (!Number.isFinite(numericGoal) || numericGoal <= 0) {
+        setError("Funding goal must be a positive number")
+        return
+      }
+
+      setSubmitting(true)
+      try {
+        const { error: insertError } = await supabase
+          .from("campaigns")
+          .insert([
+            {
+              title,
+              description,
+              goal: numericGoal,
+              raised: 0,
+              urgency,
+              disaster,
+              verified: false,
+            },
+          ])
+        if (insertError) throw insertError
+        onClose()
+      } catch (e) {
+        setError(e.message || "Failed to create campaign")
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="campaign-name">Campaign Name</Label>
-            <Input id="campaign-name" placeholder="Enter campaign name" />
+            <Input id="campaign-name" placeholder="Enter campaign name" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="disaster-type">Disaster Type</Label>
-            <Select>
+            <Select value={disaster} onValueChange={setDisaster}>
               <SelectTrigger>
                 <SelectValue placeholder="Select disaster type" />
               </SelectTrigger>
@@ -490,24 +535,26 @@ function CreateCampaignForm({ onClose }) {
             </Select>
           </div>
         </div>
-  
+
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
             placeholder="Describe the situation and how donations will help"
             className="min-h-[100px]"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </div>
-  
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="funding-goal">Funding Goal (RM)</Label>
-            <Input id="funding-goal" type="number" placeholder="100000" />
+            <Input id="funding-goal" type="number" placeholder="100000" value={goal} onChange={(e) => setGoal(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="urgency">Urgency Level</Label>
-            <Select>
+            <Select value={urgency} onValueChange={setUrgency}>
               <SelectTrigger>
                 <SelectValue placeholder="Select urgency" />
               </SelectTrigger>
@@ -520,12 +567,16 @@ function CreateCampaignForm({ onClose }) {
             </Select>
           </div>
         </div>
-  
+
+        {error && (
+          <p className="text-sm text-red-600">{error}</p>
+        )}
+
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={onClose}>Create Campaign</Button>
+          <Button onClick={handleCreate} disabled={submitting}>{submitting ? "Creating..." : "Create Campaign"}</Button>
         </div>
       </div>
     )
