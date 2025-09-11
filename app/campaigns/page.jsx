@@ -103,6 +103,7 @@ export default function CampaignsPage() {
                     fill
                     alt={campaign.title}
                     className="object-cover rounded-t-lg"
+                    unoptimized
                     />
                     {campaign.status === "Urgent" && (
                     <Badge className="absolute top-2 right-2 bg-blue-600" variant="secondary">

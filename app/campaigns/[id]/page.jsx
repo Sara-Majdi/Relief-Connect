@@ -195,6 +195,7 @@ export default function CampaignDetailPage({ params }) {
                 width={800}
                 height={400}
                 className="w-full h-64 md:h-80 object-cover rounded-lg"
+                unoptimized
               />
               {campaign.urgency === "urgent" && (
                 <Badge className="absolute top-4 right-4 bg-blue-600">

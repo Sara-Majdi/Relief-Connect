@@ -33,7 +33,7 @@ export function MainNav() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">ReliefConnect</span>
@@ -100,12 +100,12 @@ export function MainNav() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link href="/about" legacyBehavior passHref>
+                <Link href="/about">
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>About Us</NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link href="/ngo/register" legacyBehavior passHref>
+                <Link href="/ngo/register">
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>For NGOs</NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
@@ -114,7 +114,7 @@ export function MainNav() {
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center gap-2">
-            {/* Temporarily commented auth-based UI */}
+            {/* Temporarily comment out auth-based UI */}
             {/*}
             {!loading && (
               <>
@@ -166,8 +166,8 @@ export function MainNav() {
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right">
-                <nav className="flex flex-col gap-4 mt-8">
+              <SheetContent side="right" className="bg-white">
+                <nav className="flex flex-col mx-auto gap-4 mt-8">
                   <Link href="/campaigns" className="text-lg font-medium">
                     Campaigns
                   </Link>
