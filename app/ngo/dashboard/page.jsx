@@ -285,7 +285,7 @@ export default function NGODashboard() {
                   Add Item Request
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="bg-white">
                 <DialogHeader>
                   <DialogTitle>Add Item Request</DialogTitle>
                   <DialogDescription>Add a new item that your campaign needs from donors.</DialogDescription>
@@ -596,7 +596,7 @@ function CreateCampaignForm({ onClose }) {
             <SelectTrigger>
               <SelectValue placeholder="Select campaign" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="pahang">Pahang Flood Relief</SelectItem>
               <SelectItem value="cameron">Cameron Highlands Recovery</SelectItem>
               <SelectItem value="kelantan">Kelantan Drought Response</SelectItem>
@@ -615,7 +615,7 @@ function CreateCampaignForm({ onClose }) {
               <SelectTrigger>
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
                 <SelectItem value="high">High</SelectItem>

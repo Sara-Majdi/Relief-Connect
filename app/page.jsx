@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image";
 import styles from "./page.module.css";
 import { Button } from "@/components/ui/button";
@@ -5,8 +7,44 @@ import Link from "next/link";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { AlertTriangle, ArrowRight, CheckCircle, Clock, Heart, Shield } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
+
 
 export default function Home() {
+  const router = useRouter()
+  const [campaigns, setCampaigns] = useState([])
+
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+        const { data, error } = await supabase
+            .from("campaigns")
+            .select("*")
+
+        if (data) {
+            const mapped = data.map((c) => ({
+                id: c.id,
+                title: c.title,
+                description: c.description,
+                raised: Number(c.raised ?? 0),
+                goal: Number(c.goal ?? 0),
+                imageUrl: c.image_url ?? c.image ?? "/placeholder.svg",
+                status: c.urgency === "critical" ? "Critical" : c.urgency === "urgent" ? "Urgent" : undefined,
+                ngoVerified: Boolean(c.verified),
+                type: c.disaster,
+                created_at: c.created_at,
+                urgency: c.urgency,
+            }))
+            setCampaigns(mapped)
+        }
+    }
+    fetchCampaigns()
+}, [])
+
+
+
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -46,8 +84,8 @@ export default function Home() {
       </section>
 
       {/* Active Campaigns Section */}
-      <section className="w-full py-12 md:py-24 bg-white flex items-center justify-center">
-        <div className="container items-center justify-center px-4 md:px-6">
+      <section className="w-full py-12 md:py-24 bg-white">
+        <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Active Relief Campaigns</h2>
@@ -56,133 +94,63 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
-            {/* Campaign Card 1 */}
-            <Card>
-              <CardHeader className="p-0">
-                <div className="relative h-48 w-full">
-                  <Image
-                    src="/placeholder.svg?height=200&width=400"
-                    fill
-                    alt="Flood relief campaign"
-                    className="object-cover rounded-t-lg"
-                  />
-                  <Badge className="absolute top-2 right-2 bg-blue-600" variant="secondary">
-                    <Clock className="mr-1 h-3 w-3" /> Urgent
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8 ">
+            {campaigns.slice(0, 3).map((campaign) => (
+            <Card key={campaign.id}>
+                <CardHeader className="p-0">
+                    <div className="relative h-48 w-full">
+                        <Image
+                        src={campaign.imageUrl || "/placeholder.svg?height=200&width=400"}
+                        fill
+                        alt={campaign.title}
+                        className="object-cover rounded-t-lg"
+                        unoptimized
+                        />
+                        {campaign.status === "Urgent" && (
+                        <Badge className="absolute top-2 right-2 bg-blue-600" variant="secondary">
+                            <Clock className="mr-1 h-3 w-3" /> Urgent
+                        </Badge>
+                        )}
+                        {campaign.status === "Critical" && (
+                        <Badge className="absolute top-2 right-2 bg-amber-600" variant="secondary">
+                            <AlertTriangle className="mr-1 h-3 w-3" /> Critical
+                        </Badge>
+                        )}
+                    </div>
+                </CardHeader>
+                <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    <CheckCircle className="mr-1 h-3 w-3" /> Verified NGO
-                  </Badge>
+                    {campaign.ngoVerified && (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <CheckCircle className="mr-1 h-3 w-3" /> Verified NGO
+                        </Badge>
+                    )}
                 </div>
-                <CardTitle className="text-xl mb-2">Pahang Flood Relief</CardTitle>
-                <CardDescription className="line-clamp-2 mb-4">
-                  Supporting communities affected by severe flooding in Pahang state with emergency supplies and
-                  shelter.
-                </CardDescription>
+                <CardTitle className="text-xl mb-2">{campaign.title}</CardTitle>
+                <CardDescription className="line-clamp-2 mb-4">{campaign.description}</CardDescription>
                 <div className="space-y-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: "70%" }}></div>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">RM 70,000 raised</span>
-                    <span className="text-gray-500">of RM 100,000</span>
-                  </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                            className="bg-blue-600 h-2.5 rounded-full"
+                            style={{ width: `${Math.min(((campaign.raised / campaign.goal) * 100), 100)}%` }}
+                        ></div>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="font-medium">RM {campaign.raised.toLocaleString()} raised</span>
+                        <span className="text-gray-500">of RM {campaign.goal.toLocaleString()}</span>
+                    </div>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-between border-t p-6 pt-4">
-                <Button variant="outline" size="sm">
-                  Learn More
-                </Button>
-                <Button size="sm">Donate</Button>
-              </CardFooter>
+                </CardContent>
+                <CardFooter className="flex justify-between border-t p-6 pt-4">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/campaigns/${campaign.id}`}>Learn More</Link>
+                    </Button>
+                    <Button size="sm" onClick={() => router.push(`/donate?campaign=${campaign.id}`)}>
+                        Donate
+                    </Button>
+                </CardFooter>
             </Card>
-
-            {/* Campaign Card 2 */}
-            <Card>
-              <CardHeader className="p-0">
-                <div className="relative h-48 w-full">
-                  <Image
-                    src="/placeholder.svg?height=200&width=400"
-                    fill
-                    alt="Landslide relief campaign"
-                    className="object-cover rounded-t-lg"
-                  />
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    <CheckCircle className="mr-1 h-3 w-3" /> Verified NGO
-                  </Badge>
-                </div>
-                <CardTitle className="text-xl mb-2">Cameron Highlands Landslide Recovery</CardTitle>
-                <CardDescription className="line-clamp-2 mb-4">
-                  Providing aid to families displaced by recent landslides in the Cameron Highlands region.
-                </CardDescription>
-                <div className="space-y-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: "45%" }}></div>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">RM 45,000 raised</span>
-                    <span className="text-gray-500">of RM 100,000</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between border-t p-6 pt-4">
-                <Button variant="outline" size="sm">
-                  Learn More
-                </Button>
-                <Button size="sm">Donate</Button>
-              </CardFooter>
-            </Card>
-
-            {/* Campaign Card 3 */}
-            <Card>
-              <CardHeader className="p-0">
-                <div className="relative h-48 w-full">
-                  <Image
-                    src="/placeholder.svg?height=200&width=400"
-                    fill
-                    alt="Drought relief campaign"
-                    className="object-cover rounded-t-lg"
-                  />
-                  <Badge className="absolute top-2 right-2 bg-amber-600" variant="secondary">
-                    <AlertTriangle className="mr-1 h-3 w-3" /> Critical
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    <CheckCircle className="mr-1 h-3 w-3" /> Verified NGO
-                  </Badge>
-                </div>
-                <CardTitle className="text-xl mb-2">Kelantan Drought Response</CardTitle>
-                <CardDescription className="line-clamp-2 mb-4">
-                  Delivering clean water and essential supplies to communities affected by severe drought in Kelantan.
-                </CardDescription>
-                <div className="space-y-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: "25%" }}></div>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">RM 25,000 raised</span>
-                    <span className="text-gray-500">of RM 100,000</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between border-t p-6 pt-4">
-                <Button variant="outline" size="sm">
-                  Learn More
-                </Button>
-                <Button size="sm">Donate</Button>
-              </CardFooter>
-            </Card>
+            ))}
           </div>
           <div className="flex justify-center mt-8">
             <Button variant="outline" asChild>
