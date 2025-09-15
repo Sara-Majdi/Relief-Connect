@@ -33,10 +33,10 @@ import {
   AlertTriangle,
   BarChart3,
 } from "lucide-react"
+import Link from "next/link"
 
 export default function NGODashboard() {
   const [activeTab, setActiveTab] = useState("overview")
-  const [isCreateCampaignOpen, setIsCreateCampaignOpen] = useState(false)
   const [isAddItemOpen, setIsAddItemOpen] = useState(false)
 
   return (
@@ -47,23 +47,12 @@ export default function NGODashboard() {
           <p className="text-gray-500">Manage your disaster relief campaigns and track donations</p>
         </div>
         <div className="flex gap-2">
-          <Dialog open={isCreateCampaignOpen} onOpenChange={setIsCreateCampaignOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Campaign
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-white">
-              <DialogHeader>
-                <DialogTitle>Create New Campaign</DialogTitle>
-                <DialogDescription>
-                  Create a new disaster relief campaign to request funds or needed items.
-                </DialogDescription>
-              </DialogHeader>
-              <CreateCampaignForm onClose={() => setIsCreateCampaignOpen(false)} />
-            </DialogContent>
-          </Dialog>
+          <Button asChild>
+            <Link href="/ngo/campaigns/create">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Campaign
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -182,13 +171,17 @@ export default function NGODashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/campaigns/1">
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Link>
                   </Button>
-                  <Button size="sm" variant="outline">
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/ngo/campaigns/1/edit">
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
@@ -220,13 +213,17 @@ export default function NGODashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/campaigns/2">
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Link>
                   </Button>
-                  <Button size="sm" variant="outline">
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/ngo/campaigns/2/edit">
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
@@ -258,13 +255,17 @@ export default function NGODashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/campaigns/3">
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Link>
                   </Button>
-                  <Button size="sm" variant="outline">
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/ngo/campaigns/3/edit">
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
@@ -467,120 +468,6 @@ export default function NGODashboard() {
   )
 }
 
-function CreateCampaignForm({ onClose }) {
-    const [title, setTitle] = useState("")
-    const [disaster, setDisaster] = useState("")
-    const [description, setDescription] = useState("")
-    const [goal, setGoal] = useState("")
-    const [urgency, setUrgency] = useState("")
-    const [submitting, setSubmitting] = useState(false)
-    const [error, setError] = useState("")
-
-    const handleCreate = async () => {
-      setError("")
-      if (!title || !description || !goal || !disaster || !urgency) {
-        setError("Please fill in all fields")
-        return
-      }
-      const numericGoal = Number(goal)
-      if (!Number.isFinite(numericGoal) || numericGoal <= 0) {
-        setError("Funding goal must be a positive number")
-        return
-      }
-
-      setSubmitting(true)
-      try {
-        const { error: insertError } = await supabase
-          .from("campaigns")
-          .insert([
-            {
-              title,
-              description,
-              goal: numericGoal,
-              raised: 0,
-              urgency,
-              disaster,
-              verified: false,
-            },
-          ])
-        if (insertError) throw insertError
-        onClose()
-      } catch (e) {
-        setError(e.message || "Failed to create campaign")
-      } finally {
-        setSubmitting(false)
-      }
-    }
-
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="campaign-name">Campaign Name</Label>
-            <Input id="campaign-name" placeholder="Enter campaign name" value={title} onChange={(e) => setTitle(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="disaster-type">Disaster Type</Label>
-            <Select value={disaster} onValueChange={setDisaster}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select disaster type" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="flood">Flood</SelectItem>
-                <SelectItem value="landslide">Landslide</SelectItem>
-                <SelectItem value="drought">Drought</SelectItem>
-                <SelectItem value="fire">Fire</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            placeholder="Describe the situation and how donations will help"
-            className="min-h-[100px]"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="funding-goal">Funding Goal (RM)</Label>
-            <Input id="funding-goal" type="number" placeholder="100000" value={goal} onChange={(e) => setGoal(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="urgency">Urgency Level</Label>
-            <Select value={urgency} onValueChange={setUrgency}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select urgency" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {error && (
-          <p className="text-sm text-red-600">{error}</p>
-        )}
-
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={submitting}>{submitting ? "Creating..." : "Create Campaign"}</Button>
-        </div>
-      </div>
-    )
-  }
   
   function AddItemForm({ onClose }) {
     return (
