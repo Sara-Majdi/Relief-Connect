@@ -1,17 +1,164 @@
 "use client";
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, FileText, Upload } from "lucide-react"
+import { CheckCircle, FileText, Upload, Loader2 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { createClient } from "@/lib/supabase/client"
 
 export default function NGORegisterPage() {
+  const router = useRouter()
   const [step, setStep] = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
+  // Form state
+  const [formData, setFormData] = useState({
+    // Organization Information
+    orgName: "",
+    registrationNumber: "",
+    yearEstablished: "",
+    orgType: "",
+    address: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    description: "",
+    website: "",
+    email: "",
+    phone: "",
+    focusArea: "",
+    
+    // Documents
+    registrationCert: null,
+    taxExemptionCert: null,
+    annualReport: null,
+    
+    // Document URLs (after upload)
+    registrationCertUrl: null,
+    taxExemptionCertUrl: null,
+    annualReportUrl: null
+  })
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleFileUpload = async (file, field) => {
+    if (!file) return null
+
+    try {
+      const supabase = createClient()
+      const fileExt = file.name.split('.').pop()
+      const fileName = `ngo-docs/${Date.now()}-${field}.${fileExt}`
+      
+      const { data, error } = await supabase.storage
+        .from('ngo-documents')
+        .upload(fileName, file)
+      
+      if (error) throw error
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('ngo-documents')
+        .getPublicUrl(fileName)
+      
+      return publicUrl
+    } catch (err) {
+      console.error(`Error uploading ${field}:`, err)
+      setError(`Failed to upload ${field}`)
+      return null
+    }
+  }
+
+  const validateForm = () => {
+    const required = [
+      'orgName', 'registrationNumber', 'yearEstablished', 'orgType',
+      'address', 'city', 'state', 'postalCode', 'email', 'phone'
+    ]
+    
+    for (const field of required) {
+      if (!formData[field]) {
+        setError(`Please fill in the ${field} field`)
+        return false
+      }
+    }
+
+    if (isNaN(Number(formData.yearEstablished)) || Number(formData.yearEstablished) < 1900 || Number(formData.yearEstablished) > new Date().getFullYear()) {
+      setError("Please enter a valid year")
+      return false
+    }
+
+    return true
+  }
+
+  const handleSubmit = async () => {
+    setError("")
+    
+    if (!validateForm()) {
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const supabase = createClient()
+
+      // Upload documents if provided
+      const registrationCertUrl = formData.registrationCert ? 
+        await handleFileUpload(formData.registrationCert, 'registration-cert') : null
+      const taxExemptionCertUrl = formData.taxExemptionCert ? 
+        await handleFileUpload(formData.taxExemptionCert, 'tax-exemption-cert') : null
+      const annualReportUrl = formData.annualReport ? 
+        await handleFileUpload(formData.annualReport, 'annual-report') : null
+
+      // Create NGO registration
+      const { data, error: insertError } = await supabase
+        .from("ngo_registrations")
+        .insert([
+          {
+            org_name: formData.orgName,
+            registration_number: formData.registrationNumber,
+            year_established: Number(formData.yearEstablished),
+            org_type: formData.orgType,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            postal_code: formData.postalCode,
+            description: formData.description,
+            website: formData.website,
+            email: formData.email,
+            phone: formData.phone,
+            focus_area: formData.focusArea,
+            registration_cert_url: registrationCertUrl,
+            tax_exemption_cert_url: taxExemptionCertUrl,
+            annual_report_url: annualReportUrl,
+            status: 'pending',
+            created_at: new Date().toISOString()
+          },
+        ])
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+
+      // Redirect to success page or dashboard
+      router.push('/ngo/dashboard?registered=true')
+    } catch (e) {
+      console.error("NGO registration error:", e)
+      setError(e.message || "Failed to submit registration")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   
   return (
     <div className="container px-4 md:px-6 py-8 md:py-12 max-w-4xl mx-auto">
@@ -19,6 +166,12 @@ export default function NGORegisterPage() {
         <h1 className="text-3xl font-bold mb-2">NGO Registration</h1>
         <p className="text-gray-500">Join ReliefConnect to create and manage disaster relief campaigns</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
 
       <div className="mb-8">
         <div className="flex justify-between items-center relative">
@@ -57,23 +210,39 @@ export default function NGORegisterPage() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="org-name">Organization Name</Label>
-                <Input id="org-name" placeholder="Enter your organization's name" />
+                <Label htmlFor="org-name">Organization Name *</Label>
+                <Input 
+                  id="org-name" 
+                  placeholder="Enter your organization's name" 
+                  value={formData.orgName}
+                  onChange={(e) => handleInputChange('orgName', e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="registration-number">Registration Number</Label>
-                <Input id="registration-number" placeholder="Official registration number" />
+                <Label htmlFor="registration-number">Registration Number *</Label>
+                <Input 
+                  id="registration-number" 
+                  placeholder="Official registration number" 
+                  value={formData.registrationNumber}
+                  onChange={(e) => handleInputChange('registrationNumber', e.target.value)}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="year-established">Year Established</Label>
-                <Input id="year-established" type="number" placeholder="YYYY" />
+                <Label htmlFor="year-established">Year Established *</Label>
+                <Input 
+                  id="year-established" 
+                  type="number" 
+                  placeholder="YYYY" 
+                  value={formData.yearEstablished}
+                  onChange={(e) => handleInputChange('yearEstablished', e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="org-type">Organization Type</Label>
-                <Select>
+                <Label htmlFor="org-type">Organization Type *</Label>
+                <Select value={formData.orgType} onValueChange={(value) => handleInputChange('orgType', value)}>
                   <SelectTrigger id="org-type">
                     <SelectValue placeholder="Select organization type" />
                   </SelectTrigger>
@@ -89,18 +258,28 @@ export default function NGORegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="org-address">Address</Label>
-              <Textarea id="org-address" placeholder="Enter your organization's address" />
+              <Label htmlFor="org-address">Address *</Label>
+              <Textarea 
+                id="org-address" 
+                placeholder="Enter your organization's address" 
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" placeholder="City" />
+                <Label htmlFor="city">City *</Label>
+                <Input 
+                  id="city" 
+                  placeholder="City" 
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Select>
+                <Label htmlFor="state">State *</Label>
+                <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
                   <SelectTrigger id="state">
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
@@ -125,8 +304,13 @@ export default function NGORegisterPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="postal-code">Postal Code</Label>
-                <Input id="postal-code" placeholder="Postal code" />
+                <Label htmlFor="postal-code">Postal Code *</Label>
+                <Input 
+                  id="postal-code" 
+                  placeholder="Postal code" 
+                  value={formData.postalCode}
+                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                />
               </div>
             </div>
 
@@ -138,28 +322,47 @@ export default function NGORegisterPage() {
                 id="org-description" 
                 placeholder="Describe your organization's mission, vision, and activities" 
                 className="min-h-[120px]"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="website">Website</Label>
-                <Input id="website" type="url" placeholder="https://www.example.org" />
+                <Input 
+                  id="website" 
+                  type="url" 
+                  placeholder="https://www.example.org" 
+                  value={formData.website}
+                  onChange={(e) => handleInputChange('website', e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="contact@organization.org" />
+                <Label htmlFor="email">Email *</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="contact@organization.org" 
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" placeholder="+60 12 345 6789" />
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input 
+                  id="phone" 
+                  placeholder="+60 12 345 6789" 
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="focus-area">Primary Focus Area</Label>
-                <Select>
+                <Select value={formData.focusArea} onValueChange={(value) => handleInputChange('focusArea', value)}>
                   <SelectTrigger id="focus-area">
                     <SelectValue placeholder="Select focus area" />
                   </SelectTrigger>
@@ -203,7 +406,23 @@ export default function NGORegisterPage() {
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <p className="text-sm font-medium mb-1">Drag and drop your file here</p>
                   <p className="text-xs text-gray-500 mb-4">PDF only, max 5MB</p>
-                  <Button size="sm" variant="outline">Browse Files</Button>
+                  <Input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => handleInputChange('registrationCert', e.target.files[0])}
+                    className="hidden"
+                    id="registration-cert"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => document.getElementById('registration-cert').click()}
+                  >
+                    Browse Files
+                  </Button>
+                  {formData.registrationCert && (
+                    <p className="text-sm text-green-600 mt-2">✓ {formData.registrationCert.name}</p>
+                  )}
                 </div>
               </div>
 
@@ -262,19 +481,19 @@ export default function NGORegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Organization Name</p>
-                    <p className="font-medium">Malaysian Relief Foundation</p>
+                    <p className="font-medium">{formData.orgName || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Registration Number</p>
-                    <p className="font-medium">MRF12345678</p>
+                    <p className="font-medium">{formData.registrationNumber || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Year Established</p>
-                    <p className="font-medium">2010</p>
+                    <p className="font-medium">{formData.yearEstablished || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Organization Type</p>
-                    <p className="font-medium">Non-Profit Organization</p>
+                    <p className="font-medium">{formData.orgType || 'Not provided'}</p>
                   </div>
                 </div>
               </div>
@@ -286,19 +505,19 @@ export default function NGORegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Address</p>
-                    <p className="font-medium">123 Jalan Merdeka, Taman Sejahtera</p>
+                    <p className="font-medium">{formData.address || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">City, State, Postal Code</p>
-                    <p className="font-medium">Kuala Lumpur, 50000</p>
+                    <p className="font-medium">{`${formData.city || ''}, ${formData.state || ''}, ${formData.postalCode || ''}`}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">contact@mrf.org</p>
+                    <p className="font-medium">{formData.email || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">+60 12 345 6789</p>
+                    <p className="font-medium">{formData.phone || 'Not provided'}</p>
                   </div>
                 </div>
               </div>
@@ -334,7 +553,20 @@ export default function NGORegisterPage() {
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">Submit Application</Button>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700" 
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Application'
+              )}
+            </Button>
           </CardFooter>
         </Card>
       )}
