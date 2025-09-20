@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,15 +9,23 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package } from "lucide-react"
 import Link from "next/link"
 
 export default function CreateCampaignPage() {
+  const supabase = createClient();
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("basic")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  //const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // For now, allow anyone to create campaigns (no auth required)
+  useEffect(() => {
+    setLoading(false)
+  }, [])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -69,6 +77,7 @@ export default function CreateCampaignPage() {
     }))
   }
 
+  //Adding new row to the table
   const addFinancialCategory = () => {
     setFormData(prev => ({
       ...prev,
@@ -76,6 +85,7 @@ export default function CreateCampaignPage() {
     }))
   }
 
+  //Remove row from the table
   const removeFinancialCategory = (index) => {
     setFormData(prev => ({
       ...prev,
@@ -92,6 +102,7 @@ export default function CreateCampaignPage() {
     }))
   }
 
+  //Add new empty array
   const addNeededItem = () => {
     setFormData(prev => ({
       ...prev,
@@ -99,6 +110,7 @@ export default function CreateCampaignPage() {
     }))
   }
 
+  //Removes a needed item
   const removeNeededItem = (index) => {
     setFormData(prev => ({
       ...prev,
@@ -111,12 +123,13 @@ export default function CreateCampaignPage() {
     if (file) {
       setFormData(prev => ({
         ...prev,
-        image: file,
-        imagePreview: URL.createObjectURL(file)
+        image: file, //stores uploaded image as file
+        imagePreview: URL.createObjectURL(file) //preview of img
       }))
     }
   }
 
+  //Check to see all required fill has been filled
   const validateForm = () => {
     const required = [
       'title', 'description', 'disaster', 'urgency', 'state', 
@@ -152,12 +165,14 @@ export default function CreateCampaignPage() {
 
     setSubmitting(true)
     try {
-      // Upload image if provided
-      let imageUrl = null
+
+
+      // Upload image to bucket
+      let imageUrl = null 
       if (formData.image) {
-        const fileExt = formData.image.name.split('.').pop()
-        const fileName = `${Date.now()}.${fileExt}`
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const fileExt = formData.image.name.split('.').pop() // get file extension
+        const fileName = `${Date.now()}.${fileExt}` // create unique file name using timestamp
+        const { data: uploadData, error: uploadError } = await supabase.storage //upload img file to campaign-images bucket in supabase
           .from('campaign-images')
           .upload(fileName, formData.image)
         
@@ -165,10 +180,11 @@ export default function CreateCampaignPage() {
         
         const { data: { publicUrl } } = supabase.storage
           .from('campaign-images')
-          .getPublicUrl(fileName)
+          .getPublicUrl(fileName) //get public url from uploaded file
         
         imageUrl = publicUrl
       }
+
 
       // Create campaign
       const { data, error: insertError } = await supabase
@@ -191,7 +207,9 @@ export default function CreateCampaignPage() {
             verified: false,
             financial_breakdown: formData.financialBreakdown.filter(item => item.category && item.allocated),
             needed_items: formData.neededItems.filter(item => item.name && item.quantity),
-            donors: 0
+            donors: 0,
+            user_id: null, // No auth for now
+            ngo: "Anonymous NGO"
           },
         ])
         .select()
@@ -201,12 +219,30 @@ export default function CreateCampaignPage() {
 
       // Redirect to campaign detail page
       router.push(`/campaigns/${data.id}`)
-    } catch (e) {
+    } 
+      catch (e) {
       setError(e.message || "Failed to create campaign")
-    } finally {
+      } 
+      finally {
       setSubmitting(false)
-    }
+      }
   }
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="container mx-auto max-w-4xl px-4 md:px-6 py-8">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="text-gray-500">Loading...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // No authentication required for now
 
   return (
     <div className="container mx-auto max-w-4xl px-4 md:px-6 py-8">
@@ -233,11 +269,35 @@ export default function CreateCampaignPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="details">Campaign Details</TabsTrigger>
-          <TabsTrigger value="finances">Finances</TabsTrigger>
-          <TabsTrigger value="items">Needed Items</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 border-2">
+          <TabsTrigger 
+            value="basic" 
+            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+          >
+              Basic Info
+          </TabsTrigger>
+
+          <TabsTrigger  
+            value="details"
+            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+          >
+            Campaign Details
+          </TabsTrigger>
+
+          <TabsTrigger 
+            value="finances"
+            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+          >
+              Finances
+          </TabsTrigger>
+
+          <TabsTrigger 
+            value="items"
+            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+          >
+              Needed Items
+          </TabsTrigger>
+          
         </TabsList>
 
         {/* Basic Information Tab */}
@@ -570,7 +630,7 @@ export default function CreateCampaignPage() {
 
       {/* Action Buttons */}
       <div className="flex justify-between items-center mt-8 pt-6 border-t">
-        <Button variant="outline" asChild>
+        <Button variant="outline" className="bg-red-500" asChild>
           <Link href="/ngo/dashboard">Cancel</Link>
         </Button>
         <div className="flex gap-2">
@@ -588,6 +648,7 @@ export default function CreateCampaignPage() {
             Previous
           </Button>
           <Button
+            className="bg-green-400"
             onClick={() => {
               const tabs = ['basic', 'details', 'finances', 'items']
               const currentIndex = tabs.indexOf(activeTab)

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package, Loader2 } from "lucide-react"
 import Link from "next/link"
 
@@ -19,6 +19,7 @@ export default function EditCampaignPage({ params }) {
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [user, setUser] = useState(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -54,6 +55,11 @@ export default function EditCampaignPage({ params }) {
       try {
         setLoading(true)
         setError(null)
+
+        const supabase = createClient()
+        
+        // No authentication required for now
+        setUser({ id: null, email: 'anonymous' })
 
         const { data, error } = await supabase
           .from("campaigns")
@@ -199,6 +205,8 @@ export default function EditCampaignPage({ params }) {
 
     setSubmitting(true)
     try {
+      const supabase = createClient()
+
       // Upload new image if provided
       let imageUrl = formData.existingImage
       if (formData.image) {
