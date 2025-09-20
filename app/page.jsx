@@ -9,12 +9,12 @@ import { AlertTriangle, ArrowRight, CheckCircle, Clock, Heart, Shield } from "lu
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
 
 
-export default function Home() {
+export default async function Home() {
   const router = useRouter()
   const [campaigns, setCampaigns] = useState([])
+
 
   useEffect(() => {
     const fetchCampaigns = async () => {

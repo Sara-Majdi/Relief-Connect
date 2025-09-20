@@ -99,16 +99,19 @@ export function MainNav() {
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
+              
               <NavigationMenuItem>
-                <Link href="/about">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>About Us</NavigationMenuLink>
-                </Link>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/about">About Us</Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
+
               <NavigationMenuItem>
-                <Link href="/ngo/register">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>For NGOs</NavigationMenuLink>
-                </Link>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/ngo/register">For NGOs</Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
+
             </NavigationMenuList>
           </NavigationMenu>
         </div>

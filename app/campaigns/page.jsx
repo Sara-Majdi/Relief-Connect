@@ -20,6 +20,7 @@ export default function CampaignsPage() {
     const [selectedDisasterType, setSelectedDisasterType] = useState("all")
     const [sortBy, setSortBy] = useState("newest")
 
+
     useEffect(() => {
         const fetchCampaigns = async () => {
             const { data, error } = await supabase
