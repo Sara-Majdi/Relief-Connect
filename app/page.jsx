@@ -9,38 +9,45 @@ import { AlertTriangle, ArrowRight, CheckCircle, Clock, Heart, Shield } from "lu
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 
-export default async function Home() {
+export default function Home() {
   const router = useRouter()
   const [campaigns, setCampaigns] = useState([])
+  const supabase = createClient()
 
-
+  //Fetching Campaigns
   useEffect(() => {
     const fetchCampaigns = async () => {
-        const { data, error } = await supabase
-            .from("campaigns")
-            .select("*")
+      const { data, error } = await supabase
+      .from("campaigns")
+      .select("*")
 
-        if (data) {
-            const mapped = data.map((c) => ({
-                id: c.id,
-                title: c.title,
-                description: c.description,
-                raised: Number(c.raised ?? 0),
-                goal: Number(c.goal ?? 0),
-                imageUrl: c.image_url ?? c.image ?? "/placeholder.svg",
-                status: c.urgency === "critical" ? "Critical" : c.urgency === "urgent" ? "Urgent" : undefined,
-                ngoVerified: Boolean(c.verified),
-                type: c.disaster,
-                created_at: c.created_at,
-                urgency: c.urgency,
-            }))
-            setCampaigns(mapped)
-        }
-    }
+      if (error) {
+        console.error('Error fetching campaigns:', error)
+        return
+      }
+
+      if (data) {
+        const mapped = data.map((c) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          raised: Number(c.raised ?? 0),
+          goal: Number(c.goal ?? 0),
+          imageUrl: c.image_url ?? c.image ?? "/placeholder.svg",
+          status: c.urgency === "critical" ? "Critical" : c.urgency === "urgent" ? "Urgent" : undefined,
+          ngoVerified: Boolean(c.verified),
+          type: c.disaster,
+          created_at: c.created_at,
+          urgency: c.urgency,
+        }))
+        setCampaigns(mapped)
+      }   
+    } 
     fetchCampaigns()
-}, [])
+}, [supabase])
 
 
 

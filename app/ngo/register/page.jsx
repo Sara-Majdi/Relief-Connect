@@ -392,6 +392,7 @@ export default function NGORegisterPage() {
               Please upload the required documents for verification. All documents must be in PDF format.
             </CardDescription>
           </CardHeader>
+          
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <div className="border rounded-lg p-6 space-y-4">
@@ -438,7 +439,23 @@ export default function NGORegisterPage() {
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <p className="text-sm font-medium mb-1">Drag and drop your file here</p>
                   <p className="text-xs text-gray-500 mb-4">PDF only, max 5MB</p>
-                  <Button size="sm" variant="outline">Browse Files</Button>
+                  <Input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => handleInputChange('taxExemptionCert', e.target.files[0])}
+                    className="hidden"
+                    id="tax-exemption-cert"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => document.getElementById('tax-exemption-cert').click()}
+                  >
+                    Browse Files
+                  </Button>
+                  {formData.taxExemptionCert && (
+                    <p className="text-sm text-green-600 mt-2">✓ {formData.taxExemptionCert.name}</p>
+                  )}
                 </div>
               </div>
 
@@ -454,11 +471,28 @@ export default function NGORegisterPage() {
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <p className="text-sm font-medium mb-1">Drag and drop your file here</p>
                   <p className="text-xs text-gray-500 mb-4">PDF only, max 5MB</p>
-                  <Button size="sm" variant="outline">Browse Files</Button>
+                  <Input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => handleInputChange('annualReport', e.target.files[0])}
+                    className="hidden"
+                    id="annual-report"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => document.getElementById('annual-report').click()}
+                  >
+                    Browse Files
+                  </Button>
+                  {formData.annualReport && (
+                    <p className="text-sm text-green-600 mt-2">✓ {formData.annualReport.name}</p>
+                  )}
                 </div>
               </div>
             </div>
           </CardContent>
+
           <CardFooter className="flex justify-between">
             <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
             <Button onClick={() => setStep(3)}>Continue</Button>
