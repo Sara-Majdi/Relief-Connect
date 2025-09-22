@@ -48,7 +48,7 @@ export default async function Home() {
         <p className="text-xl">Created with: {app_metadata.provider}</p>
         
         <form action={signOut}>
-          <button className="btn" type="submit">
+          <button className="btn" type="submit" href="/donor/profile">
             Sign Out
           </button>
         </form>
