@@ -1,9 +1,11 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { User, Heart, Calendar, DollarSign, Award, TrendingUp, Edit, Mail, Phone, MapPin } from 'lucide-react';
 import { signOut } from '@/app/utils/action';
 import Image from 'next/image';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import ReceiptDocument from '@/components/ReceiptDocument';
 
 const DonorProfileClient = ({ donorData }) => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -185,9 +187,16 @@ const DonorProfileClient = ({ donorData }) => {
                       <div>
                         <div className="flex items-center justify-between mb-6">
                           <h3 className="text-lg font-semibold text-gray-900">Donation History</h3>
-                          <button className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                            Download Report
-                          </button>
+                          <PDFDownloadLink
+                            document={<ReceiptDocument donor={{ name: donorData.name, email: donorData.email }} donation={{ id: 'report', date: new Date().toISOString().slice(0,10), amount: donorData.totalDonated, cause: 'All Donations', receipt: `RC-REPORT-${new Date().getFullYear()}` }} organization={{ name: 'Relief Connect' }} />}
+                            fileName={`donation-report-${new Date().getFullYear()}.pdf`}
+                          >
+                            {({ loading }) => (
+                              <button className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" disabled={loading}>
+                                {loading ? 'Preparing…' : 'Download Report'}
+                              </button>
+                            )}
+                          </PDFDownloadLink>
                         </div>
                         
                         <div className="overflow-x-auto">
@@ -208,9 +217,16 @@ const DonorProfileClient = ({ donorData }) => {
                                   <td className="py-4 px-4 text-gray-900">{donation.cause}</td>
                                   <td className="py-4 px-4 font-semibold text-green-600">${donation.amount}</td>
                                   <td className="py-4 px-4">
-                                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                      {donation.receipt}
-                                    </button>
+                                    <PDFDownloadLink
+                                      document={<ReceiptDocument donor={{ name: donorData.name, email: donorData.email }} donation={donation} organization={{ name: 'Relief Connect' }} />}
+                                      fileName={`${donation.receipt || `RC-${donation.id}`}.pdf`}
+                                    >
+                                      {({ loading }) => (
+                                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium" disabled={loading}>
+                                          {loading ? 'Generating…' : (donation.receipt || 'Download')}
+                                        </button>
+                                      )}
+                                    </PDFDownloadLink>
                                   </td>
                                   <td className="py-4 px-4">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
