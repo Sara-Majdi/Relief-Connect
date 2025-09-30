@@ -18,17 +18,64 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, User, LogOut, Settings } from "lucide-react"
-// import { useAuth } from "@/hooks/useAuth"
+import { Menu, User, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 export function MainNav() {
-  //const { user, signOut, loading } = useAuth()
   const router = useRouter()
+  const supabase = createClient()
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    const init = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (mounted) setUser(user)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+    init()
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => {
+      mounted = false
+      sub.subscription?.unsubscribe()
+    }
+  }, [supabase])
 
   const handleSignOut = async () => {
-    // await signOut()
+    await supabase.auth.signOut()
+    router.refresh()
     router.push("/")
+  }
+
+  const handleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+      
+      if (error) {
+        console.error('OAuth error:', error)
+        // Handle error appropriately
+      }
+    } catch (error) {
+      console.error('Sign in failed:', error)
+    }
   }
 
   return (
@@ -117,49 +164,37 @@ export function MainNav() {
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center gap-2">
-            {/* Temporarily comment out auth-based UI */}
-            {/*}
-            {!loading && (
-              <>
-                {user ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <User className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href="/profile">
-                          <User className="mr-2 h-4 w-4" />
-                          Profile
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/my-donations">
-                          <Settings className="mr-2 h-4 w-4" />
-                          My Donations
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleSignOut}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Button variant="outline" asChild>
-                    <Link href="/login">Login</Link>
-                  </Button>
-                )}
-              </>
+            {loading ? null : (
+              user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-full">
+                      {/* Simple avatar fallback */}
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium">
+                        {user.email?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-white">
+                    <DropdownMenuItem asChild>
+                      <Link href="/donor/profile">
+                        <User className="mr-2 h-4 w-4" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="outline" onClick={handleSignIn}>
+                  Sign in
+                </Button>
+              )
             )}
-            */}
-            
-            <Button asChild>
-              <Link href="/donate">Donate Now</Link>
-            </Button>
           </div>
           <div className="flex md:hidden items-center gap-2">
             <Sheet>
@@ -180,29 +215,22 @@ export function MainNav() {
                   <Link href="/ngo/register" className="text-lg font-medium">
                     For NGOs
                   </Link>
-                  {/* Comment out auth here too */}
-                  {/*
-                  {user ? (
-                    <>
-                      <Link href="/profile" className="text-lg font-medium">
-                        Profile
-                      </Link>
-                      <Link href="/my-donations" className="text-lg font-medium">
-                        My Donations
-                      </Link>
-                      <Button variant="outline" onClick={handleSignOut} className="mt-2 bg-transparent">
-                        Sign Out
+                  {loading ? null : (
+                    user ? (
+                      <>
+                        <Link href="/donor/profile" className="text-lg font-medium">
+                          Profile
+                        </Link>
+                        <Button variant="outline" onClick={handleSignOut} className="mt-2 bg-transparent">
+                          Sign Out
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="outline" onClick={handleSignIn} className="mt-2 bg-transparent">
+                        Sign in
                       </Button>
-                    </>
-                  ) : (
-                    <Link href="/login" className="text-lg font-medium">
-                      Login
-                    </Link>
+                    )
                   )}
-                  */}
-                  <Button asChild className="mt-2">
-                    <Link href="/donate">Donate Now</Link>
-                  </Button>
                 </nav>
               </SheetContent>
             </Sheet>
