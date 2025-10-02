@@ -172,7 +172,7 @@ export function MainNav() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button variant="outline" onClick={handleSignIn}>
+                <Button variant="outline" onClick={handleSignIn} className="cursor-pointer">
                   Sign in
                 </Button>
               )
