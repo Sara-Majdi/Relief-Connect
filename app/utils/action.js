@@ -3,13 +3,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-const signInWith = provider => async () => {
+//Sign in with Google
+const signInWithGoogle = async (prev, formData) => {
     const supabase = await createClient()
     const auth_callback_url = `${process.env.SITE_URL}/auth/callback`
 
-    const { data, error } = 
-    await supabase.auth.signInWithOAuth({
-        provider,
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
         options: {
             redirectTo: auth_callback_url
         },
@@ -18,13 +18,23 @@ const signInWith = provider => async () => {
     console.log(data)
 
     if (error) {
-        console.log(error)
+        console.log('error', error)
+        return {
+            success: null,
+            error: error.message,
+        }
     }
 
-    redirect(data.url)
+    if (data.url) {
+        redirect(data.url)
+    }
+
+    return {
+        success: 'Redirecting to Google...',
+        error: null,
+    }
 }
 
-const signInWithGoogle= signInWith('google')
 
 const signOut = async () => {
     const supabase =  await createClient()

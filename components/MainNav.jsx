@@ -57,25 +57,7 @@ export function MainNav() {
   }
 
   const handleSignIn = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      })
-      
-      if (error) {
-        console.error('OAuth error:', error)
-        // Handle error appropriately
-      }
-    } catch (error) {
-      console.error('Sign in failed:', error)
-    }
+    router.push("/auth/role-select")
   }
 
   return (
