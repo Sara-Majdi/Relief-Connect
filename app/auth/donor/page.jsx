@@ -3,11 +3,12 @@ import AuthForm from "@/components/AuthForm"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
-export default function DonorAuthPage() {
+function DonorAuthPageContent() {
   const searchParams = useSearchParams()
   const authType = searchParams.get("authtype")?.toLowerCase() || "signin"
-  
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Link
@@ -29,5 +30,13 @@ export default function DonorAuthPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function DonorAuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DonorAuthPageContent />
+    </Suspense>
   )
 }
