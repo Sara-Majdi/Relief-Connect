@@ -25,7 +25,7 @@ export default function DonorAuthPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-8 shadow-lg">
-          <AuthForm userType="donor authType={authType}" />
+          <AuthForm userType="donor" authType={authType} />
         </div>
       </div>
     </div>
