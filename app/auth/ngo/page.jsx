@@ -2,7 +2,7 @@
 import AuthForm from "@/components/AuthForm"
 import Link from "next/link"
 import { ArrowLeft, AlertCircle } from "lucide-react"
-import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 
 export default function NGOAuthPage() {
   return (
@@ -36,9 +36,7 @@ export default function NGOAuthPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-8 shadow-lg">
-          <Suspense fallback={<div>Loading form...</div>}>
-            <AuthForm userType="ngo" />
-          </Suspense>
+            <AuthForm userType="ngo" authType={authType} />
         </div>
       </div>
     </div>

@@ -1,13 +1,10 @@
 'use client'
 
 import { signInWithGoogle, signupWithEmailPassword, signinWithEmailPassword } from '@/app/utils/action'
-import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import React, { useActionState } from 'react'
 
-const AuthForm = () => {
-  const searchParams = useSearchParams()
-  const authType = searchParams.get('authtype')?.toLowerCase()
+const AuthForm = ({ userType, authType }) => {
 
   const getFormAction = () => {
     switch (authType) {
