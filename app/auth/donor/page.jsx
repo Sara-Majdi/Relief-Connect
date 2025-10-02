@@ -5,6 +5,9 @@ import { ArrowLeft } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 
 export default function DonorAuthPage() {
+  const searchParams = useSearchParams()
+  const authType = searchParams.get("authtype")?.toLowerCase() || "signin"
+  
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Link
