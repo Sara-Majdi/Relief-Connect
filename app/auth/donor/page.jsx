@@ -2,6 +2,7 @@
 import AuthForm from "@/components/AuthForm"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { Suspense } from "react"
 
 export default function DonorAuthPage() {
   return (
@@ -21,7 +22,9 @@ export default function DonorAuthPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-8 shadow-lg">
+        <Suspense fallback={<div>Loading form...</div>}>
           <AuthForm userType="donor" />
+        </Suspense>
         </div>
       </div>
     </div>
