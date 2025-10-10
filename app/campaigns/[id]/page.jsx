@@ -269,7 +269,7 @@ export default function CampaignDetailPage({ params }) {
                 {/* Donation Buttons */}
                 <div className="space-y-3">
                   <Button className="w-full" size="lg" asChild>
-                    <Link href={`/donate?campaign=${campaign.id}&type=money`}>
+                    <Link href={`/donate?campaign=${campaign.id}`}>
                       <Heart className="h-4 w-4 mr-2" />
                       Donate Money
                     </Link>
