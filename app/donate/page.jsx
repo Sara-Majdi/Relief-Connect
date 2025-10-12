@@ -21,6 +21,7 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
+import { Suspense } from "react"
 
 const PRESET_AMOUNTS = [50, 100, 200, 500, 1000]
 const TIP_PERCENTAGES = [0, 5, 10, 15, 20]
@@ -187,6 +188,7 @@ export default function DonatePage() {
   const tipAmount = baseAmount * (tipPercentage / 100)
 
   return (
+    <Suspense fallback={<div className="text-center p-8 text-gray-500">Loading donation page...</div>}>
     <div className="container mx-auto max-w-4xl px-4 py-8">
       {/* Header */}
       <div className="mb-8">
@@ -431,5 +433,6 @@ export default function DonatePage() {
         </div>
       </div>
     </div>
+    </Suspense>
   )
 }
