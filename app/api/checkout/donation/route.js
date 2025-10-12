@@ -24,7 +24,10 @@ export async function POST(request) {
 
     // Get user session for metadata
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    // Log auth status for debugging
+    console.log('User auth status:', user ? 'authenticated' : 'anonymous', authError ? `Error: ${authError.message}` : '')
 
     const baseAmount = Math.round(amount / (1 + tipPercentage / 100))
     const tipAmount = amount - baseAmount
@@ -70,13 +73,15 @@ export async function POST(request) {
       metadata: {
         campaignId,
         donorId: user?.id || 'anonymous',
+        donorName: user?.user_metadata?.name || 'Anonymous Donor',
+        donorEmail: user?.email || '',
         tipPercentage: tipPercentage.toString(),
         isRecurring: isRecurring.toString(),
         recurringInterval: recurringInterval || 'monthly',
         campaignTitle,
         ngoName
       },
-      customer_email: user?.email,
+      customer_email: user?.email || undefined,
     }
 
     // Handle recurring donations

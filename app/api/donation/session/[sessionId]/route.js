@@ -29,12 +29,23 @@ export async function GET(request, { params }) {
     const {
       campaignId,
       donorId,
+      donorName: metadataDonorName,
+      donorEmail: metadataDonorEmail,
       tipPercentage,
       isRecurring,
       recurringInterval,
       campaignTitle,
       ngoName
     } = session.metadata
+
+    // Validate required metadata
+    if (!campaignId || !campaignTitle || !ngoName) {
+      console.error('Missing required metadata:', { campaignId, campaignTitle, ngoName })
+      return NextResponse.json(
+        { error: 'Incomplete donation metadata' },
+        { status: 400 }
+      )
+    }
 
     // Calculate amounts
     const totalAmount = session.amount_total / 100 // Convert from cents
@@ -44,48 +55,63 @@ export async function GET(request, { params }) {
     // Generate receipt number
     const receiptNumber = `RC-${new Date().getFullYear()}-${sessionId.slice(-8).toUpperCase()}`
 
-    // Get donor information
+    // Get donor information - prefer metadata, fallback to current session
     const supabase = await createClient()
-    let donorName = 'Anonymous Donor'
-    let donorEmail = session.customer_email
+    let donorName = metadataDonorName || 'Anonymous Donor'
+    let donorEmail = metadataDonorEmail || session.customer_email
+    let currentUser = null
 
-    if (donorId && donorId !== 'anonymous') {
+    // If we have donor info from metadata, use it; otherwise try to get current user
+    if (!metadataDonorName && donorId && donorId !== 'anonymous') {
       const { data: user } = await supabase.auth.getUser()
-      if (user?.user) {
-        donorName = user.user.user_metadata?.name || 'Anonymous Donor'
-        donorEmail = user.user.email || session.customer_email
+      currentUser = user?.user
+      if (currentUser) {
+        donorName = currentUser.user_metadata?.name || 'Anonymous Donor'
+        donorEmail = currentUser.email || session.customer_email
       }
     }
 
+    console.log('Donor info:', { donorName, donorEmail, donorId, currentUser: !!currentUser })
+
     // Create donation record in database
     try {
-      const { error: insertError } = await supabase
+      const donationRecord = {
+        id: sessionId,
+        campaign_id: campaignId,
+        donor_id: currentUser?.id || donorId,
+        amount: baseAmount,
+        tip_amount: tipAmount,
+        total_amount: totalAmount,
+        is_recurring: isRecurring === 'true',
+        recurring_interval: recurringInterval,
+        receipt_number: receiptNumber,
+        status: 'completed',
+        stripe_session_id: sessionId,
+        donor_name: donorName,
+        donor_email: donorEmail,
+        created_at: new Date().toISOString()
+      }
+
+      console.log('Inserting donation record:', donationRecord)
+
+      const { data: insertData, error: insertError } = await supabase
         .from('donations')
-        .insert({
-          id: sessionId,
-          campaign_id: campaignId,
-          donor_id: user?.id,
-          amount: baseAmount,
-          tip_amount: tipAmount,
-          total_amount: totalAmount,
-          is_recurring: isRecurring === 'true',
-          recurring_interval: recurringInterval,
-          receipt_number: receiptNumber,
-          status: 'completed',
-          stripe_session_id: sessionId,
-          created_at: new Date().toISOString()
-        })
+        .insert(donationRecord)
+        .select()
 
       if (insertError) {
         console.error('Error inserting donation:', insertError)
-        // Don't fail the request if database insert fails
+        console.error('Donation record that failed:', donationRecord)
+        // Don't fail the request if database insert fails, but log the error
+      } else {
+        console.log('Donation successfully inserted:', insertData)
       }
     } catch (dbError) {
       console.error('Database error:', dbError)
       // Continue with response even if database insert fails
     }
 
-    return NextResponse.json({
+    const responseData = {
       donationId: sessionId,
       campaignId,
       campaignTitle,
@@ -100,7 +126,10 @@ export async function GET(request, { params }) {
       donorEmail,
       status: 'completed',
       createdAt: new Date().toISOString()
-    })
+    }
+
+    console.log('Returning donation data:', responseData)
+    return NextResponse.json(responseData)
   } catch (error) {
     console.error('Error fetching donation session:', error)
     return NextResponse.json(

@@ -27,8 +27,15 @@ export default function DonationSuccessPage() {
       }
 
       try {
+        console.log('Fetching donation data for session:', sessionId)
         const response = await fetch(`/api/donation/session/${sessionId}`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const data = await response.json()
+        console.log('Donation data received:', data)
         
         if (data.error) {
           throw new Error(data.error)
@@ -64,15 +71,27 @@ export default function DonationSuccessPage() {
       <div className="container mx-auto max-w-2xl px-4 py-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-red-600">Error</CardTitle>
+            <CardTitle className="text-red-600">Error Loading Donation Details</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">
+          <CardContent className="space-y-4">
+            <p className="text-gray-600">
               {error || 'Unable to load donation details'}
             </p>
-            <Button asChild>
-              <Link href="/campaigns">Back to Campaigns</Link>
-            </Button>
+            {sessionId && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">
+                  Session ID: {sessionId}
+                </p>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button asChild>
+                <Link href="/campaigns">Back to Campaigns</Link>
+              </Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

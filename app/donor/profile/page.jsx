@@ -28,6 +28,63 @@ export default async function DonorProfilePage() {
 
   const { name, email, user_name, avatar_url } = user_metadata;
   
+  // Fetch real donation data from database
+  let donations = []
+  let totalDonated = 0
+  let totalDonations = 0
+  let lastDonation = "No donations yet"
+  let impactLevel = "New Supporter"
+
+  try {
+    // Check if donations table exists and fetch data
+    const { data: donationData, error: donationError } = await supabase
+      .from('donations')
+      .select(`
+        id,
+        amount,
+        tip_amount,
+        total_amount,
+        status,
+        receipt_number,
+        created_at,
+        campaign_id,
+        campaigns!donations_campaign_id_fkey (
+          title,
+          ngo
+        )
+      `)
+      .eq('donor_id', session.data.user.id)
+      .order('created_at', { ascending: false })
+
+    if (donationError) {
+      console.error('Error fetching donations:', donationError)
+      // If table doesn't exist, use empty data
+    } else if (donationData) {
+      donations = donationData.map(donation => ({
+        id: donation.id,
+        date: new Date(donation.created_at).toLocaleDateString('en-US'),
+        amount: donation.amount,
+        cause: donation.campaigns?.title || 'Unknown Campaign',
+        status: donation.status,
+        receipt: donation.receipt_number
+      }))
+
+      totalDonated = donationData.reduce((sum, d) => sum + (d.amount || 0), 0)
+      totalDonations = donationData.length
+      lastDonation = donations.length > 0 ? donations[0].date : "No donations yet"
+
+      // Calculate impact level based on total donated
+      if (totalDonated >= 5000) impactLevel = "Platinum Supporter"
+      else if (totalDonated >= 2000) impactLevel = "Gold Supporter"
+      else if (totalDonated >= 1000) impactLevel = "Silver Supporter"
+      else if (totalDonated >= 500) impactLevel = "Bronze Supporter"
+      else if (totalDonated > 0) impactLevel = "Supporter"
+    }
+  } catch (error) {
+    console.error('Error in donation data fetch:', error)
+    // Continue with empty data if there's an error
+  }
+  
   // Map user data to donor profile structure
   const donorData = {
     name: name || "User",
@@ -38,23 +95,13 @@ export default async function DonorProfilePage() {
       year: 'numeric', 
       month: 'long' 
     }),
-    totalDonated: 2840, // TODO : Will come from donation table
-    totalDonations: 15, // TODO : Will come from donation table
-    lastDonation: "March 15, 2024", // TODO : Will come from donation table
-    impactLevel: "Gold Supporter", // TODO : Will be calculated based on donation amounts
+    totalDonated,
+    totalDonations,
+    lastDonation,
+    impactLevel,
     avatar_url: avatar_url,
     provider: app_metadata.provider,
-    donationHistory: [
-      // TODO : Will come from donation table
-      { id: 1, date: "2024-03-15", amount: 250, cause: "Education Fund", status: "completed", receipt: "RC-2024-0315" },
-      { id: 2, date: "2024-02-14", amount: 100, cause: "Valentine's Day Campaign", status: "completed", receipt: "RC-2024-0214" },
-      { id: 3, date: "2024-01-20", amount: 200, cause: "Emergency Relief", status: "completed", receipt: "RC-2024-0120" },
-      { id: 4, date: "2023-12-25", amount: 500, cause: "Holiday Giving", status: "completed", receipt: "RC-2023-1225" },
-      { id: 5, date: "2023-11-15", amount: 150, cause: "Community Garden", status: "completed", receipt: "RC-2023-1115" },
-      { id: 6, date: "2023-10-10", amount: 300, cause: "Youth Programs", status: "completed", receipt: "RC-2023-1010" },
-      { id: 7, date: "2023-09-05", amount: 75, cause: "Animal Shelter", status: "completed", receipt: "RC-2023-0905" },
-      { id: 8, date: "2023-08-12", amount: 400, cause: "Scholarship Fund", status: "completed", receipt: "RC-2023-0812" }
-    ]
+    donationHistory: donations
   };
 
     return <DonorProfileClient donorData={donorData} />;

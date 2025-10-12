@@ -99,6 +99,16 @@ export default function DonatePage() {
     setError(null)
 
     try {
+      console.log('Creating checkout session with data:', {
+        campaignId,
+        amount: Math.round(amount * 100),
+        tipPercentage,
+        isRecurring,
+        recurringInterval,
+        campaignTitle: campaign?.title,
+        ngoName: campaign?.ngo
+      })
+
       // Create checkout session
       const response = await fetch('/api/checkout/donation', {
         method: 'POST',
@@ -116,10 +126,19 @@ export default function DonatePage() {
         })
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const { url, error: checkoutError } = await response.json()
+      console.log('Checkout response:', { url: url ? 'URL received' : 'No URL', checkoutError })
       
       if (checkoutError) {
         throw new Error(checkoutError)
+      }
+
+      if (!url) {
+        throw new Error('No checkout URL received from server')
       }
 
       // Redirect to Stripe Checkout
