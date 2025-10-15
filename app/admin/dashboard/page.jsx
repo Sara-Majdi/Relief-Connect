@@ -46,6 +46,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedApplication, setSelectedApplication] = useState(null)
   const [reviewNotes, setReviewNotes] = useState("")
+  const [ngoApplications, setNgoApplications] = useState([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (tabParam) {
@@ -53,45 +55,33 @@ export default function AdminDashboard() {
     }
   }, [tabParam])
 
-  // Mock data for NGO applications
-  const ngoApplications = [
-    {
-      id: 1,
-      organizationName: "Malaysian Relief Foundation",
-      registrationNumber: "REG-2024-001",
-      type: "NGO",
-      contactPerson: "Ahmad Ibrahim",
-      email: "ahmad@mrf.org",
-      phone: "+60123456789",
-      submittedDate: "2024-01-15",
-      status: "pending",
-      documents: ["registration.pdf", "tax-cert.pdf", "bank-statement.pdf"],
-    },
-    {
-      id: 2,
-      organizationName: "Highland Relief Society",
-      registrationNumber: "REG-2024-002",
-      type: "Charity",
-      contactPerson: "Sarah Lee",
-      email: "sarah@highland.org",
-      phone: "+60198765432",
-      submittedDate: "2024-01-16",
-      status: "pending",
-      documents: ["registration.pdf", "financial-report.pdf"],
-    },
-    {
-      id: 3,
-      organizationName: "Community Aid Network",
-      registrationNumber: "REG-2024-003",
-      type: "Foundation",
-      contactPerson: "Raj Kumar",
-      email: "raj@can.org",
-      phone: "+60187654321",
-      submittedDate: "2024-01-14",
-      status: "under-review",
-      documents: ["registration.pdf", "tax-cert.pdf"],
-    },
-  ]
+  // Fetch NGO applications when the NGO Applications tab is active
+  useEffect(() => {
+    if (activeTab === "ngo-applications") {
+      fetchNgoApplications()
+    }
+  }, [activeTab])
+
+  const fetchNgoApplications = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/ngo/registrations?status=all')
+      const result = await response.json()
+      
+      if (response.ok) {
+        setNgoApplications(result.data || [])
+      } else {
+        console.error('Error fetching NGO applications:', result.error)
+        setNgoApplications([])
+      }
+    } catch (error) {
+      console.error('Error fetching NGO applications:', error)
+      setNgoApplications([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
 
   // Mock data for donor accounts
   const donorAccounts = [
@@ -185,12 +175,64 @@ export default function AdminDashboard() {
     },
   ]
 
-  const handleApprove = (applicationId) => {
-    console.log("Approving application:", applicationId, "Notes:", reviewNotes)
+  const handleApprove = async (applicationId) => {
+    try {
+      const response = await fetch(`/api/ngo/registrations/${applicationId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reviewNotes: reviewNotes
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        // Refresh the applications list
+        await fetchNgoApplications()
+        setReviewNotes("")
+        setSelectedApplication(null)
+        // You could add a success toast here
+        alert('NGO application approved successfully!')
+      } else {
+        alert('Error approving application: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error approving application:', error)
+      alert('Error approving application: ' + error.message)
+    }
   }
 
-  const handleReject = (applicationId) => {
-    console.log("Rejecting application:", applicationId, "Notes:", reviewNotes)
+  const handleReject = async (applicationId) => {
+    try {
+      const response = await fetch(`/api/ngo/registrations/${applicationId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reviewNotes: reviewNotes
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        // Refresh the applications list
+        await fetchNgoApplications()
+        setReviewNotes("")
+        setSelectedApplication(null)
+        // You could add a success toast here
+        alert('NGO application rejected.')
+      } else {
+        alert('Error rejecting application: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error rejecting application:', error)
+      alert('Error rejecting application: ' + error.message)
+    }
   }
 
   const getStatusBadge = (status) => {
@@ -390,124 +432,180 @@ export default function AdminDashboard() {
 
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Organization</TableHead>
-                    <TableHead>Contact Person</TableHead>
-                    <TableHead>Registration No.</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ngoApplications.map((app) => (
-                    <TableRow key={app.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{app.organizationName}</p>
-                          <p className="text-sm text-muted-foreground">{app.type}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm">{app.contactPerson}</p>
-                          <p className="text-xs text-muted-foreground">{app.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{app.registrationNumber}</TableCell>
-                      <TableCell>{app.submittedDate}</TableCell>
-                      <TableCell>{getStatusBadge(app.status)}</TableCell>
-                      <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline" onClick={() => setSelectedApplication(app)}>
-                              <Eye className="h-4 w-4 mr-1" />
-                              Review
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
-                            <DialogHeader>
-                              <DialogTitle>Review Application</DialogTitle>
-                              <DialogDescription>
-                                Review the NGO application details and supporting documents
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedApplication && (
-                              <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm font-medium">Organization Name</Label>
-                                    <p className="text-sm mt-1">{selectedApplication.organizationName}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">Registration Number</Label>
-                                    <p className="text-sm mt-1">{selectedApplication.registrationNumber}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">Contact Person</Label>
-                                    <p className="text-sm mt-1">{selectedApplication.contactPerson}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">Email</Label>
-                                    <p className="text-sm mt-1">{selectedApplication.email}</p>
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm font-medium mb-2 block">Submitted Documents</Label>
-                                  <div className="space-y-2">
-                                    {selectedApplication.documents.map((doc, index) => (
-                                      <div key={index} className="flex items-center justify-between p-2 border rounded">
-                                        <div className="flex items-center gap-2">
-                                          <FileText className="h-4 w-4 text-blue-600" />
-                                          <span className="text-sm">{doc}</span>
-                                        </div>
-                                        <Button size="sm" variant="ghost">
-                                          <Download className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <Label htmlFor="review-notes">Review Notes</Label>
-                                  <Textarea
-                                    id="review-notes"
-                                    placeholder="Add notes about your decision..."
-                                    value={reviewNotes}
-                                    onChange={(e) => setReviewNotes(e.target.value)}
-                                    className="mt-2"
-                                  />
-                                </div>
-
-                                <div className="flex gap-2">
-                                  <Button
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
-                                    onClick={() => handleApprove(selectedApplication.id)}
-                                  >
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Approve
-                                  </Button>
-                                  <Button
-                                    className="flex-1 bg-red-600 hover:bg-red-700"
-                                    onClick={() => handleReject(selectedApplication.id)}
-                                  >
-                                    <XCircle className="h-4 w-4 mr-2" />
-                                    Reject
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
+              {loading ? (
+                <div className="p-8 text-center">
+                  <p>Loading NGO applications...</p>
+                </div>
+              ) : ngoApplications.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p>No NGO applications found.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Organization</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Registration No.</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {ngoApplications.map((app) => (
+                      <TableRow key={app.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{app.org_name}</p>
+                            <p className="text-sm text-muted-foreground">{app.org_type}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm">{app.email}</p>
+                            <p className="text-xs text-muted-foreground">{app.phone}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{app.registration_number}</TableCell>
+                        <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>{getStatusBadge(app.status)}</TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline" onClick={() => setSelectedApplication(app)}>
+                                <Eye className="h-4 w-4 mr-1" />
+                                Review
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
+                              <DialogHeader>
+                                <DialogTitle>Review Application</DialogTitle>
+                                <DialogDescription>
+                                  Review the NGO application details and supporting documents
+                                </DialogDescription>
+                              </DialogHeader>
+                              {selectedApplication && (
+                                <div className="space-y-6">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-sm font-medium">Organization Name</Label>
+                                      <p className="text-sm mt-1">{selectedApplication.org_name}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Registration Number</Label>
+                                      <p className="text-sm mt-1">{selectedApplication.registration_number}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Organization Type</Label>
+                                      <p className="text-sm mt-1">{selectedApplication.org_type}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Year Established</Label>
+                                      <p className="text-sm mt-1">{selectedApplication.year_established}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Email</Label>
+                                      <p className="text-sm mt-1">{selectedApplication.email}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Phone</Label>
+                                      <p className="text-sm mt-1">{selectedApplication.phone}</p>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <Label className="text-sm font-medium">Address</Label>
+                                    <p className="text-sm mt-1">{selectedApplication.address}</p>
+                                    <p className="text-sm">{selectedApplication.city}, {selectedApplication.state} {selectedApplication.postal_code}</p>
+                                  </div>
+
+                                  {selectedApplication.description && (
+                                    <div>
+                                      <Label className="text-sm font-medium">Description</Label>
+                                      <p className="text-sm mt-1">{selectedApplication.description}</p>
+                                    </div>
+                                  )}
+
+                                  <div>
+                                    <Label className="text-sm font-medium mb-2 block">Submitted Documents</Label>
+                                    <div className="space-y-2">
+                                      {selectedApplication.registration_cert_url && (
+                                        <div className="flex items-center justify-between p-2 border rounded">
+                                          <div className="flex items-center gap-2">
+                                            <FileText className="h-4 w-4 text-blue-600" />
+                                            <span className="text-sm">Registration Certificate</span>
+                                          </div>
+                                          <Button size="sm" variant="ghost" onClick={() => window.open(selectedApplication.registration_cert_url, '_blank')}>
+                                            <Download className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                      {selectedApplication.tax_exemption_cert_url && (
+                                        <div className="flex items-center justify-between p-2 border rounded">
+                                          <div className="flex items-center gap-2">
+                                            <FileText className="h-4 w-4 text-blue-600" />
+                                            <span className="text-sm">Tax Exemption Certificate</span>
+                                          </div>
+                                          <Button size="sm" variant="ghost" onClick={() => window.open(selectedApplication.tax_exemption_cert_url, '_blank')}>
+                                            <Download className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                      {selectedApplication.annual_report_url && (
+                                        <div className="flex items-center justify-between p-2 border rounded">
+                                          <div className="flex items-center gap-2">
+                                            <FileText className="h-4 w-4 text-blue-600" />
+                                            <span className="text-sm">Annual Report</span>
+                                          </div>
+                                          <Button size="sm" variant="ghost" onClick={() => window.open(selectedApplication.annual_report_url, '_blank')}>
+                                            <Download className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                      {!selectedApplication.registration_cert_url && !selectedApplication.tax_exemption_cert_url && !selectedApplication.annual_report_url && (
+                                        <p className="text-sm text-muted-foreground">No documents uploaded</p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="review-notes">Review Notes</Label>
+                                    <Textarea
+                                      id="review-notes"
+                                      placeholder="Add notes about your decision..."
+                                      value={reviewNotes}
+                                      onChange={(e) => setReviewNotes(e.target.value)}
+                                      className="mt-2"
+                                    />
+                                  </div>
+
+                                  <div className="flex gap-2">
+                                    <Button
+                                      className="flex-1 bg-green-600 hover:bg-green-700"
+                                      onClick={() => handleApprove(selectedApplication.id)}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      className="flex-1 bg-red-600 hover:bg-red-700"
+                                      onClick={() => handleReject(selectedApplication.id)}
+                                    >
+                                      <XCircle className="h-4 w-4 mr-2" />
+                                      Reject
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
