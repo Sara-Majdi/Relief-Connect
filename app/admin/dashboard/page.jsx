@@ -194,8 +194,13 @@ export default function AdminDashboard() {
         await fetchNgoApplications()
         setReviewNotes("")
         setSelectedApplication(null)
-        // You could add a success toast here
-        alert('NGO application approved successfully!')
+        
+        // Show email status
+        const message = result.emailSent 
+          ? 'NGO application approved successfully! Password setup email sent.'
+          : 'NGO application approved successfully! However, email sending failed: ' + result.emailError
+        
+        alert(message)
       } else {
         alert('Error approving application: ' + (result.error || 'Unknown error'))
       }
@@ -224,8 +229,13 @@ export default function AdminDashboard() {
         await fetchNgoApplications()
         setReviewNotes("")
         setSelectedApplication(null)
-        // You could add a success toast here
-        alert('NGO application rejected.')
+        
+        // Show email status
+        const message = result.emailSent 
+          ? 'NGO application rejected. Rejection email sent.'
+          : 'NGO application rejected. However, email sending failed: ' + result.emailError
+        
+        alert(message)
       } else {
         alert('Error rejecting application: ' + (result.error || 'Unknown error'))
       }
