@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { hashToken } from '@/lib/auth-tokens'
 
 // GET - Validate password setup token
@@ -22,7 +22,7 @@ export async function GET(request) {
       tokenLength: token.length
     })
 
-    const supabase = await createClient()
+    const supabase = createAdminClient() 
     const tokenHash = hashToken(token)
 
     // Find the token in the database

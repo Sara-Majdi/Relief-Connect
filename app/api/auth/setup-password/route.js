@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { hashToken, hashPassword } from '@/lib/auth-tokens'
+import { createAdminClient } from '@/lib/supabase/server'
+import { hashToken } from '@/lib/auth-tokens'
 
 // POST - Set password using setup token
 export async function POST(request) {
@@ -35,7 +35,7 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const tokenHash = hashToken(token)
 
     console.log('Password setup attempt:', {
@@ -70,14 +70,63 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    // Hash the password
-    const passwordHash = await hashPassword(password)
+    // Get the NGO user
+    const { data: userData, error: fetchError } = await supabase
+      .from('ngo_users')
+      .select('id, email, org_name, is_active, user_id')
+      .eq('email', tokenData.email)
+      .single()
 
-    // Update the NGO user with password and activate account
-    const { data: userData, error: userError } = await supabase
+    if (fetchError || !userData) {
+      console.error('Error fetching NGO user:', fetchError)
+      return NextResponse.json({ 
+        error: 'User account not found' 
+      }, { status: 404 })
+    }
+
+    
+    // Check if Auth user already exists
+    let authUserId = userData.user_id
+
+    if (!authUserId) {
+      // Create Supabase Auth user with password
+      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+        email: userData.email,
+        password: password,
+        email_confirm: true
+      })
+
+      if (authError) {
+        console.error('Error creating Supabase Auth user:', authError)
+        return NextResponse.json({ 
+          error: 'Failed to create authentication account' 
+        }, { status: 500 })
+      }
+
+      authUserId = authUser.user.id
+      console.log('✅ Created Auth user:', authUserId)
+    } else {
+      // Auth user already exists, just update their password
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        authUserId,
+        { password: password }
+      )
+
+      if (updateError) {
+        console.error('Error updating Auth user password:', updateError)
+        return NextResponse.json({ 
+          error: 'Failed to update password' 
+        }, { status: 500 })
+      }
+
+      console.log('✅ Updated Auth user password:', authUserId)
+    }
+
+    // Update the NGO user - activate account and link to auth user
+    const { data: updatedUser, error: userError } = await supabase
       .from('ngo_users')
       .update({
-        password_hash: passwordHash,
+        user_id: authUserId,
         is_active: true,
         updated_at: new Date().toISOString()
       })
@@ -85,12 +134,13 @@ export async function POST(request) {
       .select('id, email, org_name, is_active')
       .single()
 
-    if (userError || !userData) {
+    if (userError || !updatedUser) {
       console.error('Error updating NGO user:', userError)
       return NextResponse.json({ 
-        error: 'Failed to activate account. Please contact support.' 
+        error: 'Failed to activate account' 
       }, { status: 500 })
     }
+    
 
     // Mark the token as used
     await supabase
@@ -98,45 +148,19 @@ export async function POST(request) {
       .update({ used_at: new Date().toISOString() })
       .eq('id', tokenData.id)
 
-
-    // ✅ Step 5: Create Supabase Auth user (newly added)
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email: userData.email,
-      password,
-      email_confirm: true
+    console.log('✅ Password setup successful:', {
+      email: updatedUser.email,
+      authUserId: authUserId
     })
 
-    if (authError) {
-      console.error('Error creating Supabase Auth user:', authError)
-    } else {
-      // Link the new auth user to ngo_users
-      const { error: linkError } = await supabase
-        .from('ngo_users')
-        .update({ user_id: authUser.user.id })
-        .eq('email', userData.email)
-
-      if (linkError) {
-        console.error('Error linking NGO user to auth.user_id:', linkError)
-      } else {
-        console.log('✅ Linked NGO user to auth.users:', {
-          email: userData.email,
-          user_id: authUser.user.id
-        })
-      }
-    }
-
-    console.log('Password setup successful:', {
-      email: userData.email,
-      isActive: userData.is_active
-    })
 
     return NextResponse.json({ 
       success: true,
       message: 'Password set successfully. Your account is now active.',
       data: {
-        email: userData.email,
-        org_name: userData.org_name,
-        is_active: userData.is_active
+        email: updatedUser.email,
+        org_name: updatedUser.org_name,
+        is_active: updatedUser.is_active
       }
     })
   } catch (error) {

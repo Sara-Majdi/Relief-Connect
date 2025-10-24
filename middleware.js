@@ -36,10 +36,17 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Define public NGO routes that don't require authentication
+  const publicNGORoutes = ['/ngo/register']
+  const isPublicNGORoute = publicNGORoutes.some(route => 
+    request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(route + '/')
+  )
+
   // Protected NGO routes
   const isNGORoute = request.nextUrl.pathname.startsWith('/ngo')
     
-  if (isNGORoute) {
+  // If it's an NGO route but NOT a public one, check authentication
+  if (isNGORoute && !isPublicNGORoute) {
     // Check for NGO session cookie first
     const cookieStore = await cookies()
     const ngoSessionCookie = cookieStore.get('ngo-session')
