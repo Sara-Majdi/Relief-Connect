@@ -93,16 +93,36 @@ export async function POST(request) {
     }
 
     // Mark the token as used
-    const { error: updateTokenError } = await supabase
+    await supabase
       .from('password_setup_tokens')
-      .update({
-        used_at: new Date().toISOString()
-      })
+      .update({ used_at: new Date().toISOString() })
       .eq('id', tokenData.id)
 
-    if (updateTokenError) {
-      console.error('Error marking token as used:', updateTokenError)
-      // Don't fail the request if this fails, password is already set
+
+    // ✅ Step 5: Create Supabase Auth user (newly added)
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: userData.email,
+      password,
+      email_confirm: true
+    })
+
+    if (authError) {
+      console.error('Error creating Supabase Auth user:', authError)
+    } else {
+      // Link the new auth user to ngo_users
+      const { error: linkError } = await supabase
+        .from('ngo_users')
+        .update({ user_id: authUser.user.id })
+        .eq('email', userData.email)
+
+      if (linkError) {
+        console.error('Error linking NGO user to auth.user_id:', linkError)
+      } else {
+        console.log('✅ Linked NGO user to auth.users:', {
+          email: userData.email,
+          user_id: authUser.user.id
+        })
+      }
     }
 
     console.log('Password setup successful:', {

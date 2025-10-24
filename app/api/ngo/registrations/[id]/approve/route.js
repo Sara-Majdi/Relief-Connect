@@ -103,6 +103,29 @@ export async function PUT(request, context) {
       userId = newUser.id
     }
 
+    // ✅ Create Supabase Auth user account
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: registration.email,
+      email_confirm: true,
+    })
+
+    if (authError) {
+      console.error('Error creating auth user:', authError)
+      return NextResponse.json({ 
+        error: 'Failed to create Supabase auth user' 
+      }, { status: 500 })
+    }
+
+    // ✅ Link Auth user to NGO user
+    const { error: linkError } = await supabase
+      .from('ngo_users')
+      .update({ user_id: authUser.user.id })
+      .eq('id', userId)
+
+    if (linkError) {
+      console.error('Error linking user_id:', linkError)
+    }
+
     // 2. Delete any existing unused tokens for this email
     await supabase
       .from('password_setup_tokens')

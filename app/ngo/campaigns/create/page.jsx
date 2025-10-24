@@ -21,11 +21,36 @@ export default function CreateCampaignPage() {
   const [error, setError] = useState("")
   //const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [ngoInfo, setNgoInfo] = useState(null)
 
-  // For now, allow anyone to create campaigns (no auth required)
+  // Check NGO authentication on mount
   useEffect(() => {
-    setLoading(false)
-  }, [])
+    const checkNGOSession = async () => {
+      try {
+        const response = await fetch('/api/auth/check-session')
+        const data = await response.json()
+        
+        if (!data.isAuthenticated || !data.user) {
+          router.push('/auth/ngo')
+          return
+        }
+        
+        // Save the NGO info in state
+        setFormData((prev) => ({
+          ...prev,
+          ngo_user_id: data.user.id,
+          ngo: data.user.org_name
+        }))
+        setNgoInfo(data.user)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error checking NGO session:', error)
+        router.push('/auth/ngo')
+      }
+    }
+
+    checkNGOSession()
+  }, [router])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -60,6 +85,9 @@ export default function CreateCampaignPage() {
       { name: "", quantity: "", priority: "medium", description: "" }
     ]
   })
+
+
+
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -167,55 +195,78 @@ export default function CreateCampaignPage() {
     try {
 
 
-      // Upload image to bucket
+      // Upload image to bucket (optional - continue if upload fails)
       let imageUrl = null 
       if (formData.image) {
-        const fileExt = formData.image.name.split('.').pop() // get file extension
-        const fileName = `${Date.now()}.${fileExt}` // create unique file name using timestamp
-        const { data: uploadData, error: uploadError } = await supabase.storage //upload img file to campaign-images bucket in supabase
-          .from('campaign-images')
-          .upload(fileName, formData.image)
-        
-        if (uploadError) throw uploadError
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('campaign-images')
-          .getPublicUrl(fileName) //get public url from uploaded file
-        
-        imageUrl = publicUrl
+        try {
+          const fileExt = formData.image.name.split('.').pop() // get file extension
+          const fileName = `${Date.now()}.${fileExt}` // create unique file name using timestamp
+          console.log('Attempting to upload image:', fileName)
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('campaign-images')
+            .upload(fileName, formData.image)
+          
+          if (uploadError) {
+            console.warn('Image upload failed, continuing without image:', uploadError)
+            imageUrl = null
+          } else {
+            const { data: { publicUrl } } = supabase.storage
+              .from('campaign-images')
+              .getPublicUrl(fileName)
+            imageUrl = publicUrl
+            console.log('Image uploaded successfully:', imageUrl)
+          }
+        } catch (uploadError) {
+          console.warn('Image upload error, continuing without image:', uploadError)
+          imageUrl = null
+        }
       }
 
 
-      // Create campaign
+      // Create campaign using NGO user ID from session
+      const campaignData = {
+        title: formData.title,
+        description: formData.description,
+        long_description: formData.longDescription,
+        goal: Number(formData.goal),
+        raised: 0,
+        urgency: formData.urgency,
+        disaster: formData.disaster,
+        state: formData.state,
+        location: formData.location,
+        start_date: formData.startDate,
+        target_date: formData.targetDate,
+        beneficiaries: Number(formData.beneficiaries),
+        image_url: imageUrl,
+        verified: false,
+        financial_breakdown: formData.financialBreakdown.filter(item => item.category && item.allocated),
+        needed_items: formData.neededItems.filter(item => item.name && item.quantity),
+        donors: 0,
+        ngo_user_id: formData.ngo_user_id, // Use NGO user ID from session
+        ngo: formData.ngo
+      }
+
+      console.log('Attempting to insert campaign:', campaignData)
+      console.log('NGO User ID:', formData.ngo_user_id)
+      console.log('NGO Name:', formData.ngo)
+
+      // NGO user is already verified through session authentication
+      console.log('NGO user verified through session:', {
+        id: formData.ngo_user_id,
+        name: formData.ngo
+      })
+
       const { data, error: insertError } = await supabase
         .from("campaigns")
-        .insert([
-          {
-            title: formData.title,
-            description: formData.description,
-            long_description: formData.longDescription,
-            goal: Number(formData.goal),
-            raised: 0,
-            urgency: formData.urgency,
-            disaster: formData.disaster,
-            state: formData.state,
-            location: formData.location,
-            start_date: formData.startDate,
-            target_date: formData.targetDate,
-            beneficiaries: Number(formData.beneficiaries),
-            image_url: imageUrl,
-            verified: false,
-            financial_breakdown: formData.financialBreakdown.filter(item => item.category && item.allocated),
-            needed_items: formData.neededItems.filter(item => item.name && item.quantity),
-            donors: 0,
-            user_id: null, // No auth for now
-            ngo: "Anonymous NGO"
-          },
-        ])
+        .insert([campaignData])
         .select()
         .single()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('Campaign insertion error:', insertError)
+        throw insertError
+      }
 
       // Redirect to campaign detail page
       router.push(`/campaigns/${data.id}`)
@@ -324,7 +375,7 @@ export default function CreateCampaignPage() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select disaster type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="flood">Flood</SelectItem>
                       <SelectItem value="landslide">Landslide</SelectItem>
                       <SelectItem value="drought">Drought</SelectItem>

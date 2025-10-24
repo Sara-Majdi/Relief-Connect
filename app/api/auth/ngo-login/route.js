@@ -61,7 +61,7 @@ export async function POST(request) {
     const userSession = {
       id: userData.id,
       email: userData.email,
-      org_name: userData.org_name,
+      org_name: userData.ngo_registrations.org_name,
       registration_id: userData.registration_id,
       is_active: userData.is_active,
       login_time: new Date().toISOString()

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
 export async function middleware(request) {
   let supabaseResponse = NextResponse.next({
@@ -35,13 +36,47 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object instead of the supabaseResponse object
+  // Protected NGO routes
+  const isNGORoute = request.nextUrl.pathname.startsWith('/ngo')
+    
+  if (isNGORoute) {
+    // Check for NGO session cookie first
+    const cookieStore = await cookies()
+    const ngoSessionCookie = cookieStore.get('ngo-session')
+    
+    if (ngoSessionCookie) {
+      try {
+        const ngoUser = JSON.parse(ngoSessionCookie.value)
+        // Validate NGO session
+        if (ngoUser.id && ngoUser.email) {
+          // NGO is authenticated via cookie, allow access
+          return supabaseResponse
+        }
+      } catch (error) {
+        console.error('Error parsing NGO session cookie:', error)
+      }
+    }
+    
+    // If no valid NGO session, check Supabase auth
+    if (!user) {
+      // Redirect to login if accessing NGO routes without any auth
+      const redirectUrl = new URL('/auth/ngo', request.url)
+      redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // If user is authenticated via Supabase, verify they are an NGO
+    const { data: ngoUser, error } = await supabase
+      .from('ngo_users')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (error || !ngoUser) {
+      // User is not an NGO, redirect to home
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
 
   return supabaseResponse
 }
