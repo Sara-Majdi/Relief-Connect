@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { User, Heart, Calendar, DollarSign, Award, TrendingUp, Edit, Mail, Phone, MapPin } from 'lucide-react';
-import { signOut } from '@/app/utils/action';
+
 import Image from 'next/image';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReceiptDocument from '@/components/ReceiptDocument';
@@ -38,18 +38,16 @@ const DonorProfileClient = ({ donorData }) => {
           {/* Header */}
           <div className="bg-white shadow-sm border-b">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between h-16">
+              <div className="flex items-center justify-center h-16">
                 <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
                 <div className="flex items-center gap-4">
+
+{/* 
                   <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <Edit className="h-4 w-4" />
                     Edit Profile
                   </button>
-                  <form action={signOut}>
-                    <button className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors" type="submit">
-                      Sign Out
-                    </button>
-                  </form>
+*/}
                 </div>
               </div>
             </div>

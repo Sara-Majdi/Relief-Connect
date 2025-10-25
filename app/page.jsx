@@ -67,7 +67,7 @@ export default function Home() {
             </p>
             <div className="flex gap-4">
               <Button className="bg-black border-gray-500" size="lg" asChild>
-                <Link href="/donate">Donate Now</Link>
+                <Link href="/campaigns">Donate Now</Link>
               </Button>
               <Button
               variant="outline"
@@ -75,7 +75,7 @@ export default function Home() {
               className="text-white border-gray-500 hover:bg-black"
               asChild
               >
-                <Link href="/donate">Register as NGO</Link>
+                <Link href="/ngo/register">Register as NGO</Link>
               </Button>
             </div>
           </div>
