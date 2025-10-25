@@ -119,35 +119,37 @@ export default function NGORegisterPage() {
       const annualReportUrl = formData.annualReport ? 
         await handleFileUpload(formData.annualReport, 'annual-report') : null
 
-      // Create NGO registration
-      const { data, error: insertError } = await supabase
-        .from("ngo_registrations")
-        .insert([
-          {
-            org_name: formData.orgName,
-            registration_number: formData.registrationNumber,
-            year_established: Number(formData.yearEstablished),
-            org_type: formData.orgType,
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            postal_code: formData.postalCode,
-            description: formData.description,
-            website: formData.website,
-            email: formData.email,
-            phone: formData.phone,
-            focus_area: formData.focusArea,
-            registration_cert_url: registrationCertUrl,
-            tax_exemption_cert_url: taxExemptionCertUrl,
-            annual_report_url: annualReportUrl,
-            status: 'pending',
-            created_at: new Date().toISOString()
-          },
-        ])
-        .select()
-        .single()
+      // Submit NGO registration via API
+      const response = await fetch('/api/ngo/registrations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orgName: formData.orgName,
+          registrationNumber: formData.registrationNumber,
+          yearEstablished: Number(formData.yearEstablished),
+          orgType: formData.orgType,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          postalCode: formData.postalCode,
+          description: formData.description,
+          website: formData.website,
+          email: formData.email,
+          phone: formData.phone,
+          focusArea: formData.focusArea,
+          registrationCertUrl,
+          taxExemptionCertUrl,
+          annualReportUrl
+        }),
+      })
 
-      if (insertError) throw insertError
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to submit registration')
+      }
 
       // Redirect to success page or dashboard
       router.push('/ngo/dashboard?registered=true')

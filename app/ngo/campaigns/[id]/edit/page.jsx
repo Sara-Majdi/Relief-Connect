@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package, Loader2 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function EditCampaignPage({ params }) {
   const router = useRouter()
@@ -496,10 +497,12 @@ export default function EditCampaignPage({ params }) {
                 <div className="space-y-4">
                   {formData.existingImage && !formData.imagePreview && (
                     <div className="relative w-full h-48">
-                      <img
+                      <Image
                         src={formData.existingImage}
                         alt="Current campaign image"
                         className="w-full h-full object-cover rounded-lg border"
+                        unoptimized
+      
                       />
                     </div>
                   )}

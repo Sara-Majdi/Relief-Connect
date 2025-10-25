@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { supabase } from "@/lib/supabaseClient"
 import {
   Dialog,
   DialogContent,
@@ -36,8 +36,47 @@ import {
 import Link from "next/link"
 
 export default function NGODashboard() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [isAddItemOpen, setIsAddItemOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [ngoInfo, setNgoInfo] = useState(null)
+
+  // Check NGO authentication on mount
+  useEffect(() => {
+    const checkNGOSession = async () => {
+      try {
+        const response = await fetch('/api/auth/check-session')
+        const data = await response.json()
+        
+        if (!data.isAuthenticated || !data.user) {
+          router.push('/auth/ngo')
+          return
+        }
+        
+        setNgoInfo(data.user)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error checking NGO session:', error)
+        router.push('/auth/ngo')
+      }
+    }
+
+    checkNGOSession()
+  }, [router])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-12">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="text-gray-500">Loading...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container  mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-12">

@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, User, LogOut } from "lucide-react"
+import { Menu, User, LogOut, LayoutDashboard, Heart, Plus, Settings, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -27,23 +27,61 @@ export function MainNav() {
   const router = useRouter()
   const supabase = createClient()
   const [user, setUser] = useState(null)
+  const [userRole, setUserRole] = useState(null)
+  const [organizationName, setOrganizationName] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
     const init = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (mounted) setUser(user)
+        // First, check for NGO session cookie
+        const ngoSessionCheck = await fetch('/api/auth/check-session')
+        const ngoData = await ngoSessionCheck.json()
+        
+        if (ngoData.isAuthenticated && ngoData.user) {
+          if (mounted) {
+            setUser({ email: ngoData.user.email })
+            setUserRole('ngo')
+            setOrganizationName(ngoData.user.org_name || null)
+          }
+        } else {
+          // If no NGO session, check for Supabase donor auth
+          const { data: { user } } = await supabase.auth.getUser()
+          if (mounted && user) {
+            setUser(user)
+            setUserRole('donor')
+            setOrganizationName(null)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error)
       } finally {
         if (mounted) setLoading(false)
       }
     }
     init()
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    // Listen for Supabase auth changes (for donors)
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Only update if it's a donor session (NGO uses cookies, not Supabase Auth)
+      if (session?.user) {
+        setUser(session.user)
+        setUserRole('donor')
+        setOrganizationName(null)
+      } else if (!session) {
+        // Check if there's still an NGO session
+        const ngoCheck = await fetch('/api/auth/check-session')
+        const ngoData = await ngoCheck.json()
+        
+        if (!ngoData.isAuthenticated) {
+          setUser(null)
+          setUserRole(null)
+          setOrganizationName(null)
+        }
+      }
     })
+    
     return () => {
       mounted = false
       sub.subscription?.unsubscribe()
@@ -51,13 +89,39 @@ export function MainNav() {
   }, [supabase])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    if (userRole === 'ngo') {
+      // NGO logout - clear session cookie
+      await fetch('/api/auth/ngo-logout', { method: 'POST' })
+    } else {
+      // Donor logout - Supabase auth
+      await supabase.auth.signOut()
+    }
+    
+    setUser(null)
+    setUserRole(null)
+    setOrganizationName(null)
     router.refresh()
     router.push("/")
   }
 
   const handleSignIn = async () => {
     router.push("/auth/role-select")
+  }
+
+  // Get display initial for avatar
+  const getDisplayInitial = () => {
+    if (userRole === 'ngo' && organizationName) {
+      return organizationName[0]?.toUpperCase()
+    }
+    return user?.email?.[0]?.toUpperCase() || '?'
+  }
+
+  // Get avatar background color based on role
+  const getAvatarColor = () => {
+    if (userRole === 'ngo') {
+      return 'bg-indigo-100 text-indigo-700'
+    }
+    return 'bg-blue-100 text-blue-700'
   }
 
   return (
@@ -135,35 +199,80 @@ export function MainNav() {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/ngo/register">For NGOs</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-
+              {/* Show "For NGOs" link only if user is not logged in as NGO */}
+              {userRole !== 'ngo' && (
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                    <Link href="/ngo/register">For NGOs</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
+        
         <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center gap-2">
             {loading ? null : (
               user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full">
-                      {/* Simple avatar fallback */}
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium">
-                        {user.email?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
+                    <Button variant="outline" size="icon" className="rounded-full relative">
+                      <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${getAvatarColor()}`}>
+                        {getDisplayInitial()}
                       </span>
+                      {/* NGO Badge Indicator */}
+                      {userRole === 'ngo' && (
+                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 border-2 border-white">
+                          <Building2 className="h-2.5 w-2.5 text-white" />
+                        </span>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-white">
-                    <DropdownMenuItem asChild>
-                      <Link href="/donor/profile">
-                        <User className="mr-2 h-4 w-4" />
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="bg-white w-56">
+                    {/* NGO Menu Items */}
+                    {userRole === 'ngo' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/ngo/dashboard">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/ngo/campaigns">
+                            <Heart className="mr-2 h-4 w-4" />
+                            My Campaigns
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/ngo/campaigns/create">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Campaign
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/ngo/profile">
+                            <Settings className="mr-2 h-4 w-4" />
+                            Settings
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* Donor Menu Items */}
+                    {userRole === 'donor' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/donor/profile">
+                            <User className="mr-2 h-4 w-4" />
+                            Profile
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -178,6 +287,8 @@ export function MainNav() {
               )
             )}
           </div>
+          
+          {/* Mobile Menu */}
           <div className="flex md:hidden items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
@@ -194,15 +305,46 @@ export function MainNav() {
                   <Link href="/about" className="text-lg font-medium">
                     About Us
                   </Link>
-                  <Link href="/ngo/register" className="text-lg font-medium">
-                    For NGOs
-                  </Link>
+                  
+                  {/* Show "For NGOs" only if not logged in as NGO */}
+                  {userRole !== 'ngo' && (
+                    <Link href="/ngo/register" className="text-lg font-medium">
+                      For NGOs
+                    </Link>
+                  )}
+
                   {loading ? null : (
                     user ? (
                       <>
-                        <Link href="/donor/profile" className="text-lg font-medium">
-                          Profile
-                        </Link>
+                        <div className="border-t pt-4 mt-2">
+                          {/* NGO Mobile Menu */}
+                          {userRole === 'ngo' && (
+                            <>
+                              <Link href="/ngo/dashboard" className="text-lg font-medium block mb-4">
+                                Dashboard
+                              </Link>
+                              <Link href="/ngo/campaigns" className="text-lg font-medium block mb-4">
+                                My Campaigns
+                              </Link>
+                              <Link href="/ngo/campaigns/create" className="text-lg font-medium block mb-4">
+                                Create Campaign
+                              </Link>
+                              <Link href="/ngo/profile" className="text-lg font-medium block mb-4">
+                                Settings
+                              </Link>
+                            </>
+                          )}
+
+                          {/* Donor Mobile Menu */}
+                          {userRole === 'donor' && (
+                            <>
+                              <Link href="/donor/profile" className="text-lg font-medium block mb-4">
+                                Profile
+                              </Link>
+                            </>
+                          )}
+                        </div>
+                        
                         <Button variant="outline" onClick={handleSignOut} className="mt-2 bg-transparent">
                           Sign Out
                         </Button>
