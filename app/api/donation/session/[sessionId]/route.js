@@ -105,6 +105,7 @@ export async function GET(request, { params }) {
         // Don't fail the request if database insert fails, but log the error
       } else {
         console.log('Donation successfully inserted:', insertData)
+        console.log('Campaign will be updated automatically by database trigger')
       }
     } catch (dbError) {
       console.error('Database error:', dbError)

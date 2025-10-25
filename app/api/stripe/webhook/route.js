@@ -91,6 +91,7 @@ export async function POST(request) {
       }
 
       console.log('Donation successfully inserted from webhook:', insertData)
+      console.log('Campaign will be updated automatically by database trigger')
     }
 
     return NextResponse.json({ received: true })

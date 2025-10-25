@@ -84,6 +84,55 @@ export default function CampaignDetailPage({ params }) {
     if (params.id) {
       fetchCampaign()
     }
+
+    // Set up real-time subscription for campaign updates
+    const subscription = supabase
+      .channel(`campaign-${params.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'campaigns',
+          filter: `id=eq.${params.id}`
+        },
+        (payload) => {
+          console.log('Campaign updated in real-time:', payload)
+          // Update the campaign state with new data
+          if (payload.new) {
+            const data = payload.new
+            const mappedCampaign = {
+              id: data.id,
+              title: data.title,
+              ngo: data.ngo || data.organizer,
+              description: data.description,
+              longDescription: data.long_description || data.longDescription,
+              image: data.image_url || data.image,
+              raised: data.raised || 0,
+              goal: data.goal,
+              donors: data.donors || 0,
+              urgency: data.urgency,
+              disaster: data.disaster,
+              state: data.state,
+              verified: data.verified || false,
+              startDate: data.start_date || data.startDate,
+              targetDate: data.target_date || data.targetDate,
+              location: data.location,
+              beneficiaries: data.beneficiaries || 0,
+              updates: data.updates || [],
+              neededItems: data.needed_items || data.neededItems || [],
+              financialBreakdown: data.financial_breakdown || data.financialBreakdown || [],
+            }
+            setCampaign(mappedCampaign)
+          }
+        }
+      )
+      .subscribe()
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [params.id])
 
   const getStatusBadge = (status) => {
@@ -256,13 +305,13 @@ export default function CampaignDetailPage({ params }) {
                 {/* Progress */}
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="font-medium">RM {(campaign.raised || 0).toLocaleString()}</span>
-                    <span className="text-gray-500">of RM {(campaign.goal || 0).toLocaleString()}</span>
+                    <span className="font-medium">RM {(parseFloat(campaign.raised) || 0).toLocaleString()}</span>
+                    <span className="text-gray-500">of RM {(parseFloat(campaign.goal) || 0).toLocaleString()}</span>
                   </div>
-                  <Progress value={campaign.goal ? (campaign.raised / campaign.goal) * 100 : 0} className="h-3" />
+                  <Progress value={campaign.goal > 0 ? Math.min(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100, 100) : 0} className="h-3" />
                   <div className="flex justify-between text-sm text-gray-500">
-                    <span>{campaign.donors || 0} donors</span>
-                    <span>{campaign.goal ? Math.round((campaign.raised / campaign.goal) * 100) : 0}% funded</span>
+                    <span>{campaign.donors || 0} {campaign.donors === 1 ? 'donor' : 'donors'}</span>
+                    <span>{campaign.goal > 0 ? Math.round(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100) : 0}% funded</span>
                   </div>
                 </div>
 

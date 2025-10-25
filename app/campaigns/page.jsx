@@ -236,12 +236,12 @@ export default function CampaignsPage() {
                                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                                     <div
                                         className="bg-blue-600 h-2.5 rounded-full"
-                                        style={{ width: `${((campaign.raised / campaign.goal) * 100)}%` }}
+                                        style={{ width: `${campaign.goal > 0 ? Math.min(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100, 100) : 0}%` }}
                                     ></div>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="font-medium">RM {campaign.raised.toLocaleString()} raised</span>
-                                    <span className="text-gray-500">of RM {campaign.goal.toLocaleString()}</span>
+                                    <span className="font-medium">RM {(parseFloat(campaign.raised) || 0).toLocaleString()} raised</span>
+                                    <span className="text-gray-500">of RM {(parseFloat(campaign.goal) || 0).toLocaleString()}</span>
                                 </div>
                             </div>
                         </CardContent>
