@@ -17,6 +17,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, User, LogOut, LayoutDashboard, Heart, Plus, Settings, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -216,19 +222,28 @@ export function MainNav() {
             {loading ? null : (
               user ? (
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full relative">
-                      <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${getAvatarColor()}`}>
-                        {getDisplayInitial()}
-                      </span>
-                      {/* NGO Badge Indicator */}
-                      {userRole === 'ngo' && (
-                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 border-2 border-white">
-                          <Building2 className="h-2.5 w-2.5 text-white" />
-                        </span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="icon" className="rounded-full relative">
+                            <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${getAvatarColor()}`}>
+                              {getDisplayInitial()}
+                            </span>
+                            {/* NGO Badge Indicator */}
+                            {userRole === 'ngo' && (
+                              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 border-2 border-white">
+                                <Building2 className="h-2.5 w-2.5 text-white" />
+                              </span>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-gray-900 text-white">
+                        <p>{userRole === 'ngo' && organizationName ? organizationName : user?.email}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <DropdownMenuContent align="end" className="bg-white w-56">
                     {/* NGO Menu Items */}
                     {userRole === 'ngo' && (
