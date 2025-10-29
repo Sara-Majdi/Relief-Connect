@@ -407,14 +407,18 @@ export default function CampaignDetailPage({ params }) {
                       <div>
                         <CardTitle className="text-lg">{update.title}</CardTitle>
                         <CardDescription>
-                          {update.date} • by {update.author}
+                          {update.date ? new Date(update.date).toLocaleDateString('en-MY', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'Recent'} • by {update.author || 'NGO'}
                         </CardDescription>
                       </div>
                       <Badge variant="outline">New</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 mb-4">{update.content}</p>
+                    <p className="text-gray-700 mb-4 whitespace-pre-wrap">{update.description || update.content}</p>
                     {update.image && (
                       <Image
                         src={update.image}
