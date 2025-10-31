@@ -165,47 +165,53 @@ export default function NGORegisterPage() {
   return (
     <div className="container px-4 md:px-6 py-8 md:py-12 max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">NGO Registration</h1>
-        <p className="text-gray-500">Join ReliefConnect to create and manage disaster relief campaigns</p>
+        <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-yellow-600 bg-clip-text text-transparent">NGO Registration</h1>
+        <p className="text-gray-600 text-lg">Join ReliefConnect to create and manage disaster relief campaigns</p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md animate-pulse">
+          <p className="text-red-700 font-medium">{error}</p>
         </div>
       )}
 
-      <div className="mb-8">
+      <div className="mb-10">
         <div className="flex justify-between items-center relative">
-          <div className="w-full absolute top-1/2 h-0.5 bg-gray-200"></div>
+          <div className="w-full absolute top-1/2 h-1 bg-gray-200 rounded"></div>
+          <div className={`absolute top-1/2 h-1 bg-gradient-to-r from-blue-600 to-yellow-600 rounded transition-all duration-500`} style={{width: `${((step - 1) / 2) * 100}%`}}></div>
           <div className="flex justify-between w-full relative z-10">
             <div className="flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                1
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold shadow-lg transition-all duration-300 ${step >= 1 ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white scale-110' : 'bg-white border-2 border-gray-300 text-gray-500'}`}>
+                {step > 1 ? <CheckCircle className="h-6 w-6" /> : '1'}
               </div>
-              <span className="text-sm mt-2">Organization Info</span>
+              <span className={`text-sm mt-2 font-medium ${step >= 1 ? 'text-blue-600' : 'text-gray-500'}`}>Organization Info</span>
             </div>
             <div className="flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                2
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold shadow-lg transition-all duration-300 ${step >= 2 ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-white scale-110' : 'bg-white border-2 border-gray-300 text-gray-500'}`}>
+                {step > 2 ? <CheckCircle className="h-6 w-6" /> : '2'}
               </div>
-              <span className="text-sm mt-2">Documents</span>
+              <span className={`text-sm mt-2 font-medium ${step >= 2 ? 'text-yellow-600' : 'text-gray-500'}`}>Documents</span>
             </div>
             <div className="flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                3
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold shadow-lg transition-all duration-300 ${step >= 3 ? 'bg-gradient-to-r from-green-600 to-green-500 text-white scale-110' : 'bg-white border-2 border-gray-300 text-gray-500'}`}>
+                {step > 3 ? <CheckCircle className="h-6 w-6" /> : '3'}
               </div>
-              <span className="text-sm mt-2">Review</span>
+              <span className={`text-sm mt-2 font-medium ${step >= 3 ? 'text-green-600' : 'text-gray-500'}`}>Review</span>
             </div>
           </div>
         </div>
       </div>
 
       {step === 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Organization Information</CardTitle>
-            <CardDescription>
+        <Card className="shadow-xl border-l-4 border-l-blue-500 hover:shadow-2xl transition-shadow duration-200">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-white">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileText className="h-6 w-6 text-blue-600" />
+              </div>
+              Organization Information
+            </CardTitle>
+            <CardDescription className="text-base">
               Please provide details about your NGO. All information will be verified.
             </CardDescription>
           </CardHeader>
@@ -380,32 +386,39 @@ export default function NGORegisterPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
-            <Button onClick={() => setStep(2)}>Continue</Button>
+          <CardFooter className="flex justify-end bg-gray-50">
+            <Button onClick={() => setStep(2)} className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all px-8">Continue</Button>
           </CardFooter>
         </Card>
       )}
 
       {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Document Verification</CardTitle>
-            <CardDescription>
+        <Card className="shadow-xl border-l-4 border-l-yellow-500 hover:shadow-2xl transition-shadow duration-200">
+          <CardHeader className="bg-gradient-to-r from-yellow-50 to-white">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <Upload className="h-6 w-6 text-yellow-600" />
+              </div>
+              Document Verification
+            </CardTitle>
+            <CardDescription className="text-base">
               Please upload the required documents for verification. All documents must be in PDF format.
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              <div className="border rounded-lg p-6 space-y-4">
+              <div className="border-2 border-blue-200 rounded-lg p-6 space-y-4 bg-blue-50/30 hover:border-blue-400 transition-colors">
                 <div className="flex items-center gap-4">
-                  <FileText className="h-8 w-8 text-blue-600" />
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <FileText className="h-8 w-8 text-blue-600" />
+                  </div>
                   <div>
-                    <h3 className="font-medium">Registration Certificate</h3>
-                    <p className="text-sm text-gray-500">Official NGO registration certificate issued by the government</p>
+                    <h3 className="font-semibold text-lg">Registration Certificate</h3>
+                    <p className="text-sm text-gray-600">Official NGO registration certificate issued by the government</p>
                   </div>
                 </div>
-                <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center">
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 flex flex-col items-center justify-center hover:bg-blue-50 transition-colors">
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <p className="text-sm font-medium mb-1">Drag and drop your file here</p>
                   <p className="text-xs text-gray-500 mb-4">PDF only, max 5MB</p>
@@ -416,28 +429,34 @@ export default function NGORegisterPage() {
                     className="hidden"
                     id="registration-cert"
                   />
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => document.getElementById('registration-cert').click()}
+                    className="hover:bg-blue-100 hover:text-blue-600 hover:border-blue-400 transition-colors"
                   >
                     Browse Files
                   </Button>
                   {formData.registrationCert && (
-                    <p className="text-sm text-green-600 mt-2">✓ {formData.registrationCert.name}</p>
+                    <div className="flex items-center gap-2 mt-3 p-2 bg-green-50 rounded-lg border border-green-200">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <p className="text-sm text-green-700 font-medium">{formData.registrationCert.name}</p>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="border rounded-lg p-6 space-y-4">
+              <div className="border-2 border-yellow-200 rounded-lg p-6 space-y-4 bg-yellow-50/30 hover:border-yellow-400 transition-colors">
                 <div className="flex items-center gap-4">
-                  <FileText className="h-8 w-8 text-blue-600" />
+                  <div className="p-3 bg-yellow-100 rounded-lg">
+                    <FileText className="h-8 w-8 text-yellow-600" />
+                  </div>
                   <div>
-                    <h3 className="font-medium">Tax Exemption Certificate</h3>
-                    <p className="text-sm text-gray-500">Tax exemption status document (if applicable)</p>
+                    <h3 className="font-semibold text-lg">Tax Exemption Certificate</h3>
+                    <p className="text-sm text-gray-600">Tax exemption status document (if applicable)</p>
                   </div>
                 </div>
-                <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center">
+                <div className="border-2 border-dashed border-yellow-300 rounded-lg p-6 flex flex-col items-center justify-center hover:bg-yellow-50 transition-colors">
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <p className="text-sm font-medium mb-1">Drag and drop your file here</p>
                   <p className="text-xs text-gray-500 mb-4">PDF only, max 5MB</p>
@@ -448,28 +467,34 @@ export default function NGORegisterPage() {
                     className="hidden"
                     id="tax-exemption-cert"
                   />
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => document.getElementById('tax-exemption-cert').click()}
+                    className="hover:bg-yellow-100 hover:text-yellow-600 hover:border-yellow-400 transition-colors"
                   >
                     Browse Files
                   </Button>
                   {formData.taxExemptionCert && (
-                    <p className="text-sm text-green-600 mt-2">✓ {formData.taxExemptionCert.name}</p>
+                    <div className="flex items-center gap-2 mt-3 p-2 bg-green-50 rounded-lg border border-green-200">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <p className="text-sm text-green-700 font-medium">{formData.taxExemptionCert.name}</p>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="border rounded-lg p-6 space-y-4">
+              <div className="border-2 border-green-200 rounded-lg p-6 space-y-4 bg-green-50/30 hover:border-green-400 transition-colors">
                 <div className="flex items-center gap-4">
-                  <FileText className="h-8 w-8 text-blue-600" />
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <FileText className="h-8 w-8 text-green-600" />
+                  </div>
                   <div>
-                    <h3 className="font-medium">Annual Report</h3>
-                    <p className="text-sm text-gray-500">Most recent annual report or financial statement</p>
+                    <h3 className="font-semibold text-lg">Annual Report</h3>
+                    <p className="text-sm text-gray-600">Most recent annual report or financial statement</p>
                   </div>
                 </div>
-                <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center">
+                <div className="border-2 border-dashed border-green-300 rounded-lg p-6 flex flex-col items-center justify-center hover:bg-green-50 transition-colors">
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <p className="text-sm font-medium mb-1">Drag and drop your file here</p>
                   <p className="text-xs text-gray-500 mb-4">PDF only, max 5MB</p>
@@ -480,33 +505,42 @@ export default function NGORegisterPage() {
                     className="hidden"
                     id="annual-report"
                   />
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => document.getElementById('annual-report').click()}
+                    className="hover:bg-green-100 hover:text-green-600 hover:border-green-400 transition-colors"
                   >
                     Browse Files
                   </Button>
                   {formData.annualReport && (
-                    <p className="text-sm text-green-600 mt-2">✓ {formData.annualReport.name}</p>
+                    <div className="flex items-center gap-2 mt-3 p-2 bg-green-50 rounded-lg border border-green-200">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <p className="text-sm text-green-700 font-medium">{formData.annualReport.name}</p>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           </CardContent>
 
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-            <Button onClick={() => setStep(3)}>Continue</Button>
+          <CardFooter className="flex justify-between bg-gray-50">
+            <Button variant="outline" onClick={() => setStep(1)} className="hover:bg-gray-100 hover:border-gray-400 transition-colors border-2">Back</Button>
+            <Button onClick={() => setStep(3)} className="bg-yellow-600 hover:bg-yellow-700 shadow-md hover:shadow-lg transition-all px-8">Continue</Button>
           </CardFooter>
         </Card>
       )}
 
       {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Review & Submit</CardTitle>
-            <CardDescription>
+        <Card className="shadow-xl border-l-4 border-l-green-500 hover:shadow-2xl transition-shadow duration-200">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-white">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              Review & Submit
+            </CardTitle>
+            <CardDescription className="text-base">
               Please review your information before submitting your application.
             </CardDescription>
           </CardHeader>
@@ -578,19 +612,19 @@ export default function NGORegisterPage() {
                 </div>
               </div>
 
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  By submitting this application, you confirm that all information provided is accurate and complete. 
-                  Our team will review your application and may contact you for additional information. 
-                  The verification process typically takes 3-5 business days.
+              <div className="bg-gradient-to-r from-blue-50 to-yellow-50 p-6 rounded-lg border-2 border-blue-200">
+                <p className="text-sm text-blue-800 leading-relaxed">
+                  <strong>Important:</strong> By submitting this application, you confirm that all information provided is accurate and complete.
+                  Our team will review your application and may contact you for additional information.
+                  The verification process typically takes <strong>3-5 business days</strong>.
                 </p>
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700" 
+          <CardFooter className="flex justify-between bg-gray-50">
+            <Button variant="outline" onClick={() => setStep(2)} className="hover:bg-gray-100 hover:border-gray-400 transition-colors border-2">Back</Button>
+            <Button
+              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 shadow-lg hover:shadow-xl transition-all px-8"
               onClick={handleSubmit}
               disabled={submitting}
             >
