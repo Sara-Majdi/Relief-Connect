@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Progress } from "@/components/ui/progress"
-import { Plus, Edit, Trash2, Eye, DollarSign, Package, Users, Clock, CheckCircle, AlertTriangle, BarChart3, Loader2 } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, DollarSign, Package, Users, Clock, CheckCircle, AlertTriangle, BarChart3, Loader2, LayoutDashboard, Heart, Bell } from "lucide-react"
 import Link from "next/link"
 
 export default function NGODashboard() {
@@ -323,70 +323,104 @@ export default function NGODashboard() {
     <div className="container mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">NGO Dashboard</h1>
-          <p className="text-gray-500">
-            Welcome, <span className="font-semibold text-gray-700">{ngoInfo?.org_name || 'Organization'}</span>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            NGO Dashboard
+          </h1>
+          <p className="text-gray-600">
+            Welcome back, <span className="font-semibold text-blue-600">{ngoInfo?.org_name || 'Organization'}</span>
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all">
           <Link href="/ngo/campaigns/create">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-5 w-5 mr-2" />
             Create Campaign
           </Link>
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="items">Needed Items</TabsTrigger>
-          <TabsTrigger value="updates">Updates</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 h-auto p-2 bg-gray-100 rounded-lg shadow-sm">
+          <TabsTrigger
+            value="overview"
+            className="flex items-center gap-2 py-3 px-4 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 transition-all"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            <span className="hidden sm:inline">Overview</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="campaigns"
+            className="flex items-center gap-2 py-3 px-4 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 transition-all"
+          >
+            <Heart className="h-4 w-4" />
+            <span className="hidden sm:inline">Campaigns</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="items"
+            className="flex items-center gap-2 py-3 px-4 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 transition-all"
+          >
+            <Package className="h-4 w-4" />
+            <span className="hidden sm:inline">Needed Items</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="updates"
+            className="flex items-center gap-2 py-3 px-4 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 transition-all"
+          >
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Updates</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
+            <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-green-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Total Raised</CardTitle>
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">RM {stats.totalRaised.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">Across all campaigns</p>
+                <div className="text-2xl font-bold text-green-700">RM {stats.totalRaised.toLocaleString()}</div>
+                <p className="text-xs text-gray-600 mt-1">Across all campaigns</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-blue-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Campaigns</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Active Campaigns</CardTitle>
+                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.activeCampaigns}</div>
-                <p className="text-xs text-muted-foreground">Currently running</p>
+                <div className="text-2xl font-bold text-blue-700">{stats.activeCampaigns}</div>
+                <p className="text-xs text-gray-600 mt-1">Currently running</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-purple-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Donors</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Total Donors</CardTitle>
+                <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-purple-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.totalDonors}</div>
-                <p className="text-xs text-muted-foreground">Unique contributors</p>
+                <div className="text-2xl font-bold text-purple-700">{stats.totalDonors}</div>
+                <p className="text-xs text-gray-600 mt-1">Unique contributors</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-amber-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-amber-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Items Received</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Items Received</CardTitle>
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Package className="h-5 w-5 text-amber-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.itemsReceived}%</div>
-                <p className="text-xs text-muted-foreground">of requested items</p>
+                <div className="text-2xl font-bold text-amber-700">{stats.itemsReceived}%</div>
+                <p className="text-xs text-gray-600 mt-1">of requested items</p>
               </CardContent>
             </Card>
           </div>
@@ -505,10 +539,13 @@ export default function NGODashboard() {
         </TabsContent>
 
         <TabsContent value="items" className="space-y-6">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center bg-gradient-to-r from-blue-50 to-transparent p-4 rounded-lg border border-blue-100">
             <div>
-              <h3 className="text-lg font-semibold">Needed Items</h3>
-              <p className="text-sm text-gray-500">Manage items needed for your campaigns</p>
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <Package className="h-5 w-5 text-blue-600" />
+                Needed Items
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">Manage items needed for your campaigns</p>
             </div>
             <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
               <DialogTrigger asChild>
@@ -632,10 +669,13 @@ export default function NGODashboard() {
         </TabsContent>
 
         <TabsContent value="updates" className="space-y-6">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center bg-gradient-to-r from-blue-50 to-transparent p-4 rounded-lg border border-blue-100">
             <div>
-              <h3 className="text-lg font-semibold">Campaign Updates</h3>
-              <p className="text-sm text-gray-500">Share progress and updates with your donors</p>
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <Bell className="h-5 w-5 text-blue-600" />
+                Campaign Updates
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">Share progress and updates with your donors</p>
             </div>
             <Dialog open={isAddUpdateOpen} onOpenChange={setIsAddUpdateOpen}>
               <DialogTrigger asChild>
