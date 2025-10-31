@@ -38,6 +38,7 @@ import {
   ArrowUpRight,
   BarChart3,
 } from "lucide-react"
+import AnalyticsSection from "@/components/analytics/AnalyticsSection"
 
 export default function AdminDashboard() {
   const searchParams = useSearchParams()
@@ -789,17 +790,9 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        {/* Analytics Tab */}
+{/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Analytics</CardTitle>
-              <CardDescription>Detailed insights and trends</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Analytics feature coming soon...</p>
-            </CardContent>
-          </Card>
+          <AnalyticsSection />
         </TabsContent>
       </Tabs>
     </div>
