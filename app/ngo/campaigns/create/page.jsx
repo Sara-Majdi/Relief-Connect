@@ -300,62 +300,71 @@ export default function CreateCampaignPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors border-2">
             <Link href="/ngo/dashboard">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Create New Campaign</h1>
-            <p className="text-gray-500">Set up a comprehensive disaster relief campaign</p>
+            <h1 className="text-3xl font-bold text-gray-900">Create New Campaign</h1>
+            <p className="text-gray-600">Set up a comprehensive disaster relief campaign</p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600">{error}</p>
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md animate-pulse">
+            <p className="text-red-700 font-medium">{error}</p>
           </div>
         )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 border-2">
-          <TabsTrigger 
-            value="basic" 
-            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1.5 rounded-lg h-14 shadow-sm border border-gray-200">
+          <TabsTrigger
+            value="basic"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
           >
-              Basic Info
+            <MapPin className="h-4 w-4" />
+            Basic Info
           </TabsTrigger>
 
-          <TabsTrigger  
+          <TabsTrigger
             value="details"
-            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
           >
+            <Calendar className="h-4 w-4" />
             Campaign Details
           </TabsTrigger>
 
-          <TabsTrigger 
+          <TabsTrigger
             value="finances"
-            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
           >
-              Finances
+            <DollarSign className="h-4 w-4" />
+            Finances
           </TabsTrigger>
 
-          <TabsTrigger 
+          <TabsTrigger
             value="items"
-            className="data-[state=active]:bg-gray-400 data-[state=active]:text-black"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
           >
-              Needed Items
+            <Package className="h-4 w-4" />
+            Needed Items
           </TabsTrigger>
-          
+
         </TabsList>
 
         {/* Basic Information Tab */}
         <TabsContent value="basic" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+          <Card className="shadow-lg border-l-4 border-l-blue-500 hover:shadow-xl transition-shadow duration-200">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-white">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                </div>
+                Basic Information
+              </CardTitle>
               <CardDescription>Essential details about your campaign</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -467,9 +476,14 @@ export default function CreateCampaignPage() {
 
         {/* Campaign Details Tab */}
         <TabsContent value="details" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Campaign Details</CardTitle>
+          <Card className="shadow-lg border-l-4 border-l-green-500 hover:shadow-xl transition-shadow duration-200">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-white">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Calendar className="h-5 w-5 text-green-600" />
+                </div>
+                Campaign Details
+              </CardTitle>
               <CardDescription>Timeline and target information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -543,14 +557,19 @@ export default function CreateCampaignPage() {
 
         {/* Financial Breakdown Tab */}
         <TabsContent value="finances" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Breakdown</CardTitle>
+          <Card className="shadow-lg border-l-4 border-l-purple-500 hover:shadow-xl transition-shadow duration-200">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <DollarSign className="h-5 w-5 text-purple-600" />
+                </div>
+                Financial Breakdown
+              </CardTitle>
               <CardDescription>How will the funds be allocated?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {formData.financialBreakdown.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border-2 border-purple-100 rounded-lg bg-purple-50/30 hover:border-purple-300 transition-colors">
                   <div className="space-y-2">
                     <Label>Category</Label>
                     <Input
@@ -583,6 +602,7 @@ export default function CreateCampaignPage() {
                         size="sm"
                         onClick={() => removeFinancialCategory(index)}
                         disabled={formData.financialBreakdown.length === 1}
+                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -594,7 +614,7 @@ export default function CreateCampaignPage() {
                 type="button"
                 variant="outline"
                 onClick={addFinancialCategory}
-                className="w-full"
+                className="w-full hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-colors border-2"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Financial Category
@@ -605,14 +625,19 @@ export default function CreateCampaignPage() {
 
         {/* Needed Items Tab */}
         <TabsContent value="items" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Needed Items</CardTitle>
+          <Card className="shadow-lg border-l-4 border-l-orange-500 hover:shadow-xl transition-shadow duration-200">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-white">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Package className="h-5 w-5 text-orange-600" />
+                </div>
+                Needed Items
+              </CardTitle>
               <CardDescription>What physical items do you need from donors?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {formData.neededItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-2 border-orange-100 rounded-lg bg-orange-50/30 hover:border-orange-300 transition-colors">
                   <div className="space-y-2">
                     <Label>Item Name</Label>
                     <Input
@@ -658,6 +683,7 @@ export default function CreateCampaignPage() {
                         size="sm"
                         onClick={() => removeNeededItem(index)}
                         disabled={formData.neededItems.length === 1}
+                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -669,7 +695,7 @@ export default function CreateCampaignPage() {
                 type="button"
                 variant="outline"
                 onClick={addNeededItem}
-                className="w-full"
+                className="w-full hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-colors border-2"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Needed Item
@@ -680,11 +706,11 @@ export default function CreateCampaignPage() {
       </Tabs>
 
       {/* Action Buttons */}
-      <div className="flex justify-between items-center mt-8 pt-6 border-t">
-        <Button variant="outline" className="bg-red-500" asChild>
+      <div className="flex justify-between items-center mt-8 pt-6 border-t-2">
+        <Button variant="outline" className="bg-red-500 hover:bg-red-600 text-white border-red-600 hover:border-red-700 shadow-md hover:shadow-lg transition-all" asChild>
           <Link href="/ngo/dashboard">Cancel</Link>
         </Button>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             variant="outline"
             onClick={() => {
@@ -695,11 +721,12 @@ export default function CreateCampaignPage() {
               }
             }}
             disabled={activeTab === 'basic'}
+            className="hover:bg-gray-100 hover:border-gray-400 transition-colors border-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </Button>
           <Button
-            className="bg-green-400"
+            className="bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
             onClick={() => {
               const tabs = ['basic', 'details', 'finances', 'items']
               const currentIndex = tabs.indexOf(activeTab)

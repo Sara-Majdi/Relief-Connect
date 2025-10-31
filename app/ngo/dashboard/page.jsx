@@ -328,7 +328,7 @@ export default function NGODashboard() {
             Welcome, <span className="font-semibold text-gray-700">{ngoInfo?.org_name || 'Organization'}</span>
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all">
           <Link href="/ngo/campaigns/create">
             <Plus className="h-4 w-4 mr-2" />
             Create Campaign
@@ -337,63 +337,91 @@ export default function NGODashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="items">Needed Items</TabsTrigger>
-          <TabsTrigger value="updates">Updates</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1.5 rounded-lg h-12 shadow-sm border border-gray-200">
+          <TabsTrigger
+            value="overview"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger
+            value="campaigns"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50"
+          >
+            Campaigns
+          </TabsTrigger>
+          <TabsTrigger
+            value="items"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50"
+          >
+            Needed Items
+          </TabsTrigger>
+          <TabsTrigger
+            value="updates"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50"
+          >
+            Updates
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-blue-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Total Raised</CardTitle>
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <DollarSign className="h-5 w-5 text-blue-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">RM {stats.totalRaised.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">Across all campaigns</p>
+                <div className="text-2xl font-bold text-gray-900">RM {stats.totalRaised.toLocaleString()}</div>
+                <p className="text-xs text-gray-500 mt-1">Across all campaigns</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-green-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Campaigns</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Active Campaigns</CardTitle>
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <BarChart3 className="h-5 w-5 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.activeCampaigns}</div>
-                <p className="text-xs text-muted-foreground">Currently running</p>
+                <div className="text-2xl font-bold text-gray-900">{stats.activeCampaigns}</div>
+                <p className="text-xs text-gray-500 mt-1">Currently running</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-purple-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Donors</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Total Donors</CardTitle>
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <Users className="h-5 w-5 text-purple-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.totalDonors}</div>
-                <p className="text-xs text-muted-foreground">Unique contributors</p>
+                <div className="text-2xl font-bold text-gray-900">{stats.totalDonors}</div>
+                <p className="text-xs text-gray-500 mt-1">Unique contributors</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-orange-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Items Received</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-gray-700">Items Received</CardTitle>
+                <div className="p-2 bg-orange-50 rounded-lg">
+                  <Package className="h-5 w-5 text-orange-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.itemsReceived}%</div>
-                <p className="text-xs text-muted-foreground">of requested items</p>
+                <div className="text-2xl font-bold text-gray-900">{stats.itemsReceived}%</div>
+                <p className="text-xs text-gray-500 mt-1">of requested items</p>
               </CardContent>
             </Card>
           </div>
 
-          <Card>
+          <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
             <CardHeader>
-              <CardTitle>Campaign Summary</CardTitle>
+              <CardTitle className="text-xl">Campaign Summary</CardTitle>
               <CardDescription>Overview of your active campaigns</CardDescription>
             </CardHeader>
             <CardContent>
@@ -453,7 +481,7 @@ export default function NGODashboard() {
                 const progress = campaign.goal > 0 ?
                   Math.round(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100) : 0
                 return (
-                  <Card key={campaign.id}>
+                  <Card key={campaign.id} className="hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
@@ -483,13 +511,13 @@ export default function NGODashboard() {
                         <p className="text-xs text-gray-500">{campaign.donors || 0} donors</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" asChild>
+                        <Button size="sm" variant="outline" asChild className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors">
                           <Link href={`/campaigns/${campaign.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Link>
                         </Button>
-                        <Button size="sm" variant="outline" asChild>
+                        <Button size="sm" variant="outline" asChild className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors">
                           <Link href={`/ngo/campaigns/${campaign.id}/edit`}>
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
@@ -512,7 +540,7 @@ export default function NGODashboard() {
             </div>
             <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
               <DialogTrigger asChild>
-                <Button disabled={campaigns.length === 0}>
+                <Button disabled={campaigns.length === 0} className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Item Request
                 </Button>
@@ -542,25 +570,25 @@ export default function NGODashboard() {
               </CardContent>
             </Card>
           ) : (
-            <Card>
+            <Card className="shadow-md">
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Campaign</TableHead>
-                      <TableHead>Needed</TableHead>
-                      <TableHead>Received</TableHead>
-                      <TableHead>Progress</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Actions</TableHead>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="font-semibold">Item</TableHead>
+                      <TableHead className="font-semibold">Campaign</TableHead>
+                      <TableHead className="font-semibold">Needed</TableHead>
+                      <TableHead className="font-semibold">Received</TableHead>
+                      <TableHead className="font-semibold">Progress</TableHead>
+                      <TableHead className="font-semibold">Priority</TableHead>
+                      <TableHead className="font-semibold">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {getAllNeededItems().map((item, idx) => {
                       const progress = item.needed > 0 ? Math.round((item.received / item.needed) * 100) : 0
                       return (
-                        <TableRow key={idx}>
+                        <TableRow key={idx} className="hover:bg-gray-50 transition-colors">
                           <TableCell className="font-medium">{item.item}</TableCell>
                           <TableCell>{item.campaign_title}</TableCell>
                           <TableCell>{item.needed}</TableCell>
@@ -590,6 +618,7 @@ export default function NGODashboard() {
                                   setSelectedItem({ ...item })
                                   setIsEditItemOpen(true)
                                 }}
+                                className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -597,6 +626,7 @@ export default function NGODashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => deleteNeededItem(item.campaign_id, item.item_index)}
+                                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -639,7 +669,7 @@ export default function NGODashboard() {
             </div>
             <Dialog open={isAddUpdateOpen} onOpenChange={setIsAddUpdateOpen}>
               <DialogTrigger asChild>
-                <Button disabled={campaigns.length === 0}>
+                <Button disabled={campaigns.length === 0} className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all">
                   <Plus className="h-4 w-4 mr-2" />
                   Post Update
                 </Button>
@@ -671,7 +701,7 @@ export default function NGODashboard() {
           ) : (
             <div className="space-y-4">
               {getAllUpdates().map((update, idx) => (
-                <Card key={idx}>
+                <Card key={idx} className="shadow-md hover:shadow-lg transition-shadow duration-200">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
@@ -699,6 +729,7 @@ export default function NGODashboard() {
                           setSelectedUpdate({ ...update })
                           setIsEditUpdateOpen(true)
                         }}
+                        className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors"
                       >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
@@ -707,11 +738,12 @@ export default function NGODashboard() {
                         size="sm"
                         variant="outline"
                         onClick={() => deleteUpdate(update.campaign_id, update.update_index)}
+                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
                         Delete
                       </Button>
-                      <Button size="sm" variant="outline" asChild>
+                      <Button size="sm" variant="outline" asChild className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors">
                         <Link href={`/campaigns/${update.campaign_id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           View Public
