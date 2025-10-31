@@ -11,6 +11,8 @@ export async function GET(request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
+    console.log('Fetching NGO analytics with date range:', { startDate, endDate });
+
     // Fetch all NGO registrations
     let ngoQuery = supabase
       .from('ngo_registrations')
@@ -24,19 +26,59 @@ export async function GET(request) {
 
     const { data: ngos, error: ngosError } = await ngoQuery;
 
-    if (ngosError) throw ngosError;
+    if (ngosError) {
+      console.error('NGO registrations query error:', ngosError);
+      throw ngosError;
+    }
 
-    // Fetch campaigns
+    console.log(`Found ${ngos?.length || 0} NGO registrations`);
+
+    // Fetch campaigns - REMOVED created_at
     const { data: campaigns, error: campaignsError } = await supabase
       .from('campaigns')
-      .select('ngo, ngo_user_id, raised, goal, donors, created_at');
+      .select('ngo, ngo_user_id, raised, goal, donors, title');
 
-    if (campaignsError) throw campaignsError;
+    if (campaignsError) {
+      console.error('Campaigns query error:', campaignsError);
+      throw campaignsError;
+    }
+
+    console.log(`Found ${campaigns?.length || 0} campaigns`);
+
+    // Handle case where there are no NGOs
+    if (!ngos || ngos.length === 0) {
+      return NextResponse.json({
+        summary: {
+          totalNgos: 0,
+          approvedNgos: 0,
+          pendingNgos: 0,
+          approvalRate: 0,
+          avgReviewTime: 0,
+          avgCampaignsPerNgo: 0,
+          avgFundsPerNgo: 0,
+          successRate: 0
+        },
+        applicationPipeline: {
+          pending: 0,
+          underReview: 0,
+          approved: 0,
+          rejected: 0
+        },
+        orgTypes: {},
+        focusAreas: {},
+        topNgosByFunds: [],
+        topNgosByCampaigns: [],
+        documentSubmission: {
+          withAllDocs: 0,
+          rate: 0
+        }
+      });
+    }
 
     // Application pipeline
     const applicationPipeline = {
       pending: ngos.filter(n => n.status === 'pending').length,
-      underReview: ngos.filter(n => n.status === 'under-review').length,
+      underReview: ngos.filter(n => n.status === 'under_review').length,
       approved: ngos.filter(n => n.status === 'approved').length,
       rejected: ngos.filter(n => n.status === 'rejected').length
     };
@@ -54,7 +96,7 @@ export async function GET(request) {
           const created = new Date(ngo.created_at);
           const reviewed = new Date(ngo.reviewed_at);
           const days = Math.round((reviewed - created) / (1000 * 60 * 60 * 24));
-          return sum + days;
+          return sum + Math.max(0, days); // Ensure non-negative
         }, 0) / reviewedNgos.length
       : 0;
 
@@ -67,7 +109,7 @@ export async function GET(request) {
 
     // NGO by focus area
     const focusAreas = ngos.reduce((acc, ngo) => {
-      const area = ngo.focus_area || 'Unknown';
+      const area = ngo.focus_area || 'Other';
       if (!acc[area]) {
         acc[area] = { count: 0, raised: 0 };
       }
@@ -75,7 +117,7 @@ export async function GET(request) {
 
       // Sum funds raised by NGOs in this focus area
       const ngoName = ngo.org_name;
-      const ngoRaised = campaigns
+      const ngoRaised = (campaigns || [])
         .filter(c => c.ngo === ngoName)
         .reduce((sum, c) => sum + (parseFloat(c.raised) || 0), 0);
       acc[area].raised += ngoRaised;
@@ -84,7 +126,7 @@ export async function GET(request) {
     }, {});
 
     // Campaign count per NGO
-    const campaignsByNgo = campaigns.reduce((acc, campaign) => {
+    const campaignsByNgo = (campaigns || []).reduce((acc, campaign) => {
       const ngo = campaign.ngo || 'Unknown';
       if (!acc[ngo]) {
         acc[ngo] = { count: 0, raised: 0, donors: 0 };
@@ -102,9 +144,9 @@ export async function GET(request) {
         rank: index + 1,
         name: ngo,
         campaigns: data.count,
-        raised: data.raised,
+        raised: Math.round(data.raised * 100) / 100,
         donors: data.donors,
-        avgPerCampaign: data.count > 0 ? data.raised / data.count : 0
+        avgPerCampaign: data.count > 0 ? Math.round((data.raised / data.count) * 100) / 100 : 0
       }));
 
     const topNgosByCampaigns = Object.entries(campaignsByNgo)
@@ -114,14 +156,14 @@ export async function GET(request) {
         rank: index + 1,
         name: ngo,
         campaigns: data.count,
-        raised: data.raised,
-        avgPerCampaign: data.count > 0 ? data.raised / data.count : 0
+        raised: Math.round(data.raised * 100) / 100,
+        avgPerCampaign: data.count > 0 ? Math.round((data.raised / data.count) * 100) / 100 : 0
       }));
 
     // Average metrics per NGO
     const ngoCount = Object.keys(campaignsByNgo).length;
     const avgCampaignsPerNgo = ngoCount > 0
-      ? campaigns.length / ngoCount
+      ? (campaigns || []).length / ngoCount
       : 0;
 
     const avgFundsPerNgo = ngoCount > 0
@@ -129,10 +171,10 @@ export async function GET(request) {
       : 0;
 
     // NGO success rate (campaigns that met goal)
-    const successfulCampaigns = campaigns.filter(c =>
+    const successfulCampaigns = (campaigns || []).filter(c =>
       parseFloat(c.raised || 0) >= parseFloat(c.goal || 1)
     ).length;
-    const successRate = campaigns.length > 0
+    const successRate = campaigns && campaigns.length > 0
       ? (successfulCampaigns / campaigns.length) * 100
       : 0;
 
@@ -144,7 +186,7 @@ export async function GET(request) {
       ? (ngosWithAllDocs / ngos.length) * 100
       : 0;
 
-    return NextResponse.json({
+    const response = {
       summary: {
         totalNgos: ngos.length,
         approvedNgos: applicationPipeline.approved,
@@ -164,12 +206,20 @@ export async function GET(request) {
         withAllDocs: ngosWithAllDocs,
         rate: Math.round(docSubmissionRate * 10) / 10
       }
-    });
+    };
+
+    console.log('NGO analytics response prepared successfully');
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('NGO analytics error:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

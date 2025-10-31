@@ -11,16 +11,7 @@ export async function GET(request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    // Build date filter
-    let dateFilter = {};
-    if (startDate && endDate) {
-      dateFilter = {
-        created_at: {
-          gte: startDate,
-          lte: endDate
-        }
-      };
-    }
+    console.log('Fetching financial analytics with date range:', { startDate, endDate });
 
     // Fetch all donations with date filter
     let donationsQuery = supabase
@@ -36,14 +27,54 @@ export async function GET(request) {
 
     const { data: donations, error: donationsError } = await donationsQuery;
 
-    if (donationsError) throw donationsError;
+    if (donationsError) {
+      console.error('Donations query error:', donationsError);
+      throw donationsError;
+    }
 
-    // Fetch campaigns for top performers
+    console.log(`Found ${donations?.length || 0} donations`);
+
+    // Fetch campaigns for top performers - REMOVED created_at
     const { data: campaigns, error: campaignsError } = await supabase
       .from('campaigns')
-      .select('id, title, goal, raised, donors, created_at');
+      .select('id, title, goal, raised, donors');
 
-    if (campaignsError) throw campaignsError;
+    if (campaignsError) {
+      console.error('Campaigns query error:', campaignsError);
+      throw campaignsError;
+    }
+
+    console.log(`Found ${campaigns?.length || 0} campaigns`);
+
+    // Handle case where there are no donations
+    if (!donations || donations.length === 0) {
+      return NextResponse.json({
+        summary: {
+          totalRevenue: 0,
+          totalDonations: 0,
+          totalTips: 0,
+          avgDonation: 0,
+          donationCount: 0
+        },
+        revenueTrends: [{
+          date: new Date().toISOString().split('T')[0],
+          amount: 0,
+          tips: 0,
+          count: 0
+        }],
+        donationDistribution: {
+          small: 0,
+          medium: 0,
+          large: 0,
+          major: 0,
+        },
+        recurringVsOneTime: {
+          recurring: 0,
+          oneTime: 0
+        },
+        topCampaigns: []
+      });
+    }
 
     // Calculate total revenue
     const totalDonations = donations.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
@@ -82,24 +113,24 @@ export async function GET(request) {
     const oneTimeCount = donations.filter(d => !d.is_recurring).length;
 
     // Top performing campaigns
-    const topCampaigns = campaigns
+    const topCampaigns = (campaigns || [])
       .sort((a, b) => parseFloat(b.raised || 0) - parseFloat(a.raised || 0))
       .slice(0, 10)
       .map(c => ({
         id: c.id,
-        title: c.title,
+        title: c.title || 'Untitled Campaign',
         raised: parseFloat(c.raised || 0),
         goal: parseFloat(c.goal || 0),
         progress: (parseFloat(c.raised || 0) / parseFloat(c.goal || 1)) * 100,
         donors: c.donors || 0
       }));
 
-    return NextResponse.json({
+    const response = {
       summary: {
-        totalRevenue,
-        totalDonations,
-        totalTips,
-        avgDonation,
+        totalRevenue: Math.round(totalRevenue * 100) / 100,
+        totalDonations: Math.round(totalDonations * 100) / 100,
+        totalTips: Math.round(totalTips * 100) / 100,
+        avgDonation: Math.round(avgDonation * 100) / 100,
         donationCount: donations.length
       },
       revenueTrends,
@@ -109,12 +140,20 @@ export async function GET(request) {
         oneTime: oneTimeCount
       },
       topCampaigns
-    });
+    };
+
+    console.log('Financial analytics response prepared successfully');
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('Financial analytics error:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
