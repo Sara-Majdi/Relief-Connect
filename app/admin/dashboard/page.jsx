@@ -291,15 +291,20 @@ export default function AdminDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
+          {/* 
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          */}
           <TabsTrigger value="ngo-applications">NGO Applications</TabsTrigger>
+          {/*
           <TabsTrigger value="donor-accounts">Donor Accounts</TabsTrigger>
           <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          */}
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
+        {/*
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -410,6 +415,7 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </TabsContent>
+        */}
 
         {/* NGO Applications Tab */}
         <TabsContent value="ngo-applications" className="space-y-6">
@@ -622,6 +628,7 @@ export default function AdminDashboard() {
         </TabsContent>
 
         {/* Donor Accounts Tab */}
+        {/*
         <TabsContent value="donor-accounts" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -730,8 +737,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+        */}
 
         {/* Activity Logs Tab */}
+        {/* 
         <TabsContent value="activity-logs" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -776,8 +785,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+        */}
 
         {/* Reports Tab */}
+        {/*
         <TabsContent value="reports" className="space-y-6">
           <Card>
             <CardHeader>
@@ -789,6 +800,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+        */}
 
 {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-6">
