@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { AIInput } from "@/components/ui/ai-input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { AITextarea } from "@/components/ui/ai-textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
@@ -85,8 +87,138 @@ export default function CreateCampaignPage() {
   // Fundraising Items (monetary allocation per item)
   const [fundraisingItems, setFundraisingItems] = useState([])
 
+  // AI Helper Functions
+  const handleGenerateTitles = async () => {
+    try {
+      const response = await fetch('/api/ai/generate-titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          location: formData.location,
+          state: formData.state,
+          urgency: formData.urgency,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data.titles;
+      }
+      throw new Error(data.error || 'Failed to generate titles');
+    } catch (error) {
+      console.error('Error generating titles:', error);
+      setError('Failed to generate AI suggestions. Please try again.');
+      return [];
+    }
+  };
 
+  const handleGenerateDescription = async (type) => {
+    try {
+      const response = await fetch('/api/ai/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          location: formData.location,
+          state: formData.state,
+          urgency: formData.urgency,
+          beneficiaries: formData.beneficiaries,
+          goal: formData.goal,
+          title: formData.title,
+          type,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data.description;
+      }
+      throw new Error(data.error || 'Failed to generate description');
+    } catch (error) {
+      console.error('Error generating description:', error);
+      setError('Failed to generate AI content. Please try again.');
+      return '';
+    }
+  };
 
+  const handlePolishCopy = async (text, tone = 'professional') => {
+    try {
+      const response = await fetch('/api/ai/polish-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          tone,
+          context: 'campaign description',
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data.polished;
+      }
+      throw new Error(data.error || 'Failed to polish copy');
+    } catch (error) {
+      console.error('Error polishing copy:', error);
+      setError('Failed to polish text. Please try again.');
+      return text;
+    }
+  };
+
+  const handleGenerateFinancialCategories = async () => {
+    if (!formData.disaster || !formData.goal) {
+      setError('Please select disaster type and set a funding goal first');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ai/generate-financial-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          totalGoal: parseFloat(formData.goal) || 0,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setFormData(prev => ({
+          ...prev,
+          financialBreakdown: data.categories,
+        }));
+      } else {
+        throw new Error(data.error || 'Failed to generate categories');
+      }
+    } catch (error) {
+      console.error('Error generating financial categories:', error);
+      setError('Failed to generate financial categories. Please try again.');
+    }
+  };
+
+  const handleGenerateFundraisingItems = async () => {
+    if (!formData.disaster) {
+      setError('Please select disaster type first');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ai/generate-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          count: 5,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setFundraisingItems(data.items);
+      } else {
+        throw new Error(data.error || 'Failed to generate items');
+      }
+    } catch (error) {
+      console.error('Error generating fundraising items:', error);
+      setError('Failed to generate fundraising items. Please try again.');
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -382,11 +514,12 @@ export default function CreateCampaignPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Campaign Title *</Label>
-                  <Input
+                  <AIInput
                     id="title"
                     placeholder="e.g., Pahang Flood Relief 2024"
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
+                    onGenerate={handleGenerateTitles}
                   />
                 </div>
                 <div className="space-y-2">
@@ -409,23 +542,27 @@ export default function CreateCampaignPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="description">Short Description *</Label>
-                <Textarea
+                <AITextarea
                   id="description"
                   placeholder="Brief description of the situation and how donations will help"
                   className="min-h-[100px]"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
+                  onGenerate={() => handleGenerateDescription('short')}
+                  onPolish={handlePolishCopy}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="longDescription">Detailed Description</Label>
-                <Textarea
+                <AITextarea
                   id="longDescription"
                   placeholder="Comprehensive description with background, impact, and detailed plans"
                   className="min-h-[200px]"
                   value={formData.longDescription}
                   onChange={(e) => handleInputChange('longDescription', e.target.value)}
+                  onGenerate={() => handleGenerateDescription('long')}
+                  onPolish={handlePolishCopy}
                 />
               </div>
 
@@ -570,13 +707,28 @@ export default function CreateCampaignPage() {
         <TabsContent value="finances" className="space-y-6">
           <Card className="shadow-lg border-l-4 border-l-purple-500 hover:shadow-xl transition-shadow duration-200">
             <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <DollarSign className="h-5 w-5 text-purple-600" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <DollarSign className="h-5 w-5 text-purple-600" />
+                    </div>
+                    Financial Breakdown
+                  </CardTitle>
+                  <CardDescription>How will the funds be allocated?</CardDescription>
                 </div>
-                Financial Breakdown
-              </CardTitle>
-              <CardDescription>How will the funds be allocated?</CardDescription>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateFinancialCategories}
+                  disabled={!formData.disaster || !formData.goal}
+                  className="hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-colors"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  AI Suggest
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {formData.financialBreakdown.map((item, index) => (
@@ -638,16 +790,31 @@ export default function CreateCampaignPage() {
         <TabsContent value="fundraising" className="space-y-6">
           <Card className="shadow-lg border-l-4 border-l-green-500 hover:shadow-xl transition-shadow duration-200">
             <CardHeader className="bg-gradient-to-r from-green-50 to-white">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-green-600" />
+                    </div>
+                    Fundraising Items (Optional)
+                  </CardTitle>
+                  <CardDescription>
+                    Break down your campaign goal into specific items for transparent fundraising.
+                    Donors can choose to fund specific items or donate to the general campaign.
+                  </CardDescription>
                 </div>
-                Fundraising Items (Optional)
-              </CardTitle>
-              <CardDescription>
-                Break down your campaign goal into specific items for transparent fundraising.
-                Donors can choose to fund specific items or donate to the general campaign.
-              </CardDescription>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateFundraisingItems}
+                  disabled={!formData.disaster}
+                  className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors shrink-0"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  AI Suggest Items
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="pt-6">
               <ItemAllocationForm
