@@ -43,12 +43,9 @@ export default function EditCampaignPage({ params }) {
     image: null,
     imagePreview: null,
     existingImage: null,
-    
+
     // Financial Breakdown
-    financialBreakdown: [],
-    
-    // Needed Items
-    neededItems: []
+    financialBreakdown: []
   })
 
   useEffect(() => {
@@ -88,9 +85,6 @@ export default function EditCampaignPage({ params }) {
               { category: "Emergency Supplies", allocated: "", spent: "0" },
               { category: "Transportation", allocated: "", spent: "0" },
               { category: "Administrative", allocated: "", spent: "0" }
-            ],
-            neededItems: data.needed_items || [
-              { name: "", quantity: "", priority: "medium", description: "" }
             ]
           })
         }
@@ -137,28 +131,6 @@ export default function EditCampaignPage({ params }) {
     }))
   }
 
-  const handleNeededItemChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      neededItems: prev.neededItems.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }))
-  }
-
-  const addNeededItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      neededItems: [...prev.neededItems, { name: "", quantity: "", priority: "medium", description: "" }]
-    }))
-  }
-
-  const removeNeededItem = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      neededItems: prev.neededItems.filter((_, i) => i !== index)
-    }))
-  }
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0]
@@ -242,8 +214,7 @@ export default function EditCampaignPage({ params }) {
           target_date: formData.targetDate,
           beneficiaries: Number(formData.beneficiaries),
           image_url: imageUrl,
-          financial_breakdown: formData.financialBreakdown.filter(item => item.category && item.allocated),
-          needed_items: formData.neededItems.filter(item => item.name && item.quantity),
+          financial_breakdown: formData.financialBreakdown.filter(item => item.category && item.allocated)
         })
         .eq("id", params.id)
 
@@ -340,13 +311,6 @@ export default function EditCampaignPage({ params }) {
           >
             <DollarSign className="h-4 w-4" />
             Finances
-          </TabsTrigger>
-          <TabsTrigger
-            value="items"
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
-          >
-            <Package className="h-4 w-4" />
-            Needed Items
           </TabsTrigger>
         </TabsList>
 
@@ -628,87 +592,6 @@ export default function EditCampaignPage({ params }) {
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Needed Items Tab */}
-        <TabsContent value="items" className="space-y-6">
-          <Card className="shadow-lg border-l-4 border-l-orange-500 hover:shadow-xl transition-shadow duration-200">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-white">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Package className="h-5 w-5 text-orange-600" />
-                </div>
-                Needed Items
-              </CardTitle>
-              <CardDescription>What physical items do you need from donors?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.neededItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-2 border-orange-100 rounded-lg bg-orange-50/30 hover:border-orange-300 transition-colors">
-                  <div className="space-y-2">
-                    <Label>Item Name</Label>
-                    <Input
-                      placeholder="e.g., Blankets, Water Bottles"
-                      value={item.name}
-                      onChange={(e) => handleNeededItemChange(index, 'name', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Quantity Needed</Label>
-                    <Input
-                      type="number"
-                      placeholder="100"
-                      value={item.quantity}
-                      onChange={(e) => handleNeededItemChange(index, 'quantity', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select value={item.priority} onValueChange={(value) => handleNeededItemChange(index, 'priority', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Item specifications"
-                        value={item.description}
-                        onChange={(e) => handleNeededItemChange(index, 'description', e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeNeededItem(index)}
-                        disabled={formData.neededItems.length === 1}
-                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addNeededItem}
-                className="w-full hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-colors border-2"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Needed Item
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Action Buttons */}
@@ -720,7 +603,7 @@ export default function EditCampaignPage({ params }) {
           <Button
             variant="outline"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances', 'items']
+              const tabs = ['basic', 'details', 'finances']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex > 0) {
                 setActiveTab(tabs[currentIndex - 1])
@@ -734,7 +617,7 @@ export default function EditCampaignPage({ params }) {
           <Button
             className="bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances', 'items']
+              const tabs = ['basic', 'details', 'finances']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex < tabs.length - 1) {
                 setActiveTab(tabs[currentIndex + 1])
@@ -744,7 +627,7 @@ export default function EditCampaignPage({ params }) {
             }}
             disabled={submitting}
           >
-            {submitting ? "Updating..." : activeTab === 'items' ? "Update Campaign" : "Next"}
+            {submitting ? "Updating..." : activeTab === 'finances' ? "Update Campaign" : "Next"}
           </Button>
         </div>
       </div>

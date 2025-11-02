@@ -91,7 +91,6 @@ export default function CampaignDetailPage({ params }) {
             location: data.location,
             beneficiaries: data.beneficiaries || 0,
             updates: data.updates || [],
-            neededItems: data.needed_items || data.neededItems || [],
             financialBreakdown: data.financial_breakdown || data.financialBreakdown || [],
             financialDocuments: data.financial_documents || data.financialDocuments || [],
             createdAt: data.created_at || data.createdAt,
@@ -157,7 +156,6 @@ export default function CampaignDetailPage({ params }) {
               location: data.location,
               beneficiaries: data.beneficiaries || 0,
               updates: data.updates || [],
-              neededItems: data.needed_items || data.neededItems || [],
               financialBreakdown: data.financial_breakdown || data.financialBreakdown || [],
               financialDocuments: data.financial_documents || data.financialDocuments || [],
               createdAt: data.created_at || data.createdAt,
@@ -429,17 +427,6 @@ export default function CampaignDetailPage({ params }) {
                       <Heart className="h-5 w-5 mr-2" />
                       Donate Money
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full border-2 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-colors"
-                      size="lg"
-                      asChild
-                    >
-                      <Link href={`/donate/items?campaign=${campaign.id}`}>
-                        <Package className="h-5 w-5 mr-2" />
-                        Donate Items
-                      </Link>
-                    </Button>
                   </div>
 
                   {/* Share */}
@@ -515,12 +502,6 @@ export default function CampaignDetailPage({ params }) {
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
             >
               Breakdown
-            </TabsTrigger>
-            <TabsTrigger
-              value="items"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
-            >
-              Needed Items
             </TabsTrigger>
             <TabsTrigger
               value="finances"
@@ -669,109 +650,6 @@ export default function CampaignDetailPage({ params }) {
             )}
           </TabsContent>
 
-          <TabsContent value="items" className="space-y-6">
-            <Alert className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Package className="h-5 w-5 text-orange-600" />
-                </div>
-                <AlertDescription className="text-gray-700 font-medium">
-                  Track physical item donations in real-time. See what's needed, what's been donated, and delivery status.
-                </AlertDescription>
-              </div>
-            </Alert>
-
-            <div className="space-y-6">
-              {campaign.neededItems && campaign.neededItems.length > 0 ? (
-                campaign.neededItems.map((item, index) => (
-                  <Card key={item.id || index} className="shadow-lg border-0 hover:shadow-xl transition-all">
-                    <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50 border-b">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-xl flex items-center gap-2">
-                            <Package className="h-5 w-5 text-orange-600" />
-                            {item.name}
-                          </CardTitle>
-                          <CardDescription className="mt-1">{item.specifications || item.description}</CardDescription>
-                        </div>
-                        {getPriorityBadge(item.priority)}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 p-6">
-                    {/* Progress */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.received || 0} received</span>
-                        <span>{item.quantity || item.needed || 0} needed</span>
-                      </div>
-                      <Progress
-                        value={(item.quantity || item.needed) ? ((item.received || 0) / (item.quantity || item.needed)) * 100 : 0}
-                        className="h-2"
-                      />
-                      <div className="text-xs text-gray-500">
-                        {(item.quantity || item.needed || 0) - (item.received || 0)} items still needed
-                      </div>
-                    </div>
-
-                    {/* Recent Donations */}
-                    {item.recentDonations && item.recentDonations.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-3">Recent Donations</h4>
-                        <div className="space-y-2">
-                          {item.recentDonations.map((donation, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <Package className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium">{donation.donor}</p>
-                                  <p className="text-sm text-gray-500">
-                                    {donation.quantity} items • {donation.date}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {getStatusBadge(donation.status)}
-                                {donation.status === "in-transit" && (
-                                  <Button size="sm" variant="outline">
-                                    <Truck className="h-4 w-4 mr-1" />
-                                    Track
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                      <Button
-                        className="w-full bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700 shadow-md hover:shadow-lg transition-all"
-                        asChild
-                      >
-                        <Link href={`/donate/items?campaign=${campaign.id}&item=${item.id}`}>
-                          <Heart className="h-4 w-4 mr-2" />
-                          Donate {item.name}
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Card className="shadow-lg border-0">
-                  <CardContent className="text-center py-16">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Package className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 text-lg">No item requirements specified for this campaign.</p>
-                    <p className="text-gray-400 text-sm mt-2">Monetary donations are still welcomed!</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
           <TabsContent value="finances" className="space-y-6">
             <Card className="shadow-lg border-0">
               <CardHeader className="border-b bg-gradient-to-r from-green-50 to-blue-50">
@@ -872,24 +750,6 @@ export default function CampaignDetailPage({ params }) {
                 <CardContent className="text-center">
                   <div className="text-5xl font-bold text-blue-600 mb-3">{campaign.beneficiaries || 0}</div>
                   <p className="text-gray-700 font-medium">Families received emergency assistance</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all hover:-translate-y-1">
-                <CardHeader>
-                  <div className="w-14 h-14 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                    <Package className="h-7 w-7 text-white" />
-                  </div>
-                  <CardTitle className="text-center text-gray-700">Items Distributed</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <div className="text-5xl font-bold text-green-600 mb-3">
-                    {campaign.neededItems ?
-                      campaign.neededItems.reduce((total, item) => total + (item.received || 0), 0) :
-                      0
-                    }
-                  </div>
-                  <p className="text-gray-700 font-medium">Essential items delivered to communities</p>
                 </CardContent>
               </Card>
 

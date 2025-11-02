@@ -73,36 +73,6 @@ export async function GET(request) {
       ).length
     };
 
-    // Item fulfillment analysis
-    const itemsAnalysis = campaigns.reduce((acc, campaign) => {
-      if (campaign.needed_items && Array.isArray(campaign.needed_items)) {
-        campaign.needed_items.forEach(item => {
-          if (!acc[item.item]) {
-            acc[item.item] = {
-              item: item.item,
-              needed: 0,
-              received: 0,
-              criticalCount: 0
-            };
-          }
-          acc[item.item].needed += item.needed || 0;
-          acc[item.item].received += item.received || 0;
-          if (item.priority === 'critical') {
-            acc[item.item].criticalCount += 1;
-          }
-        });
-      }
-      return acc;
-    }, {});
-
-    const topNeededItems = Object.values(itemsAnalysis)
-      .sort((a, b) => (b.needed - b.received) - (a.needed - a.received))
-      .slice(0, 10)
-      .map(item => ({
-        ...item,
-        fulfillmentRate: item.needed > 0 ? (item.received / item.needed) * 100 : 0
-      }));
-
     // Campaign status (active vs completed)
     const now = new Date();
     const activeCampaigns = campaigns.filter(c => {
@@ -136,7 +106,6 @@ export async function GET(request) {
       urgencyDistribution,
       geographicDistribution,
       progressStages,
-      topNeededItems,
       statusBreakdown: {
         active: activeCampaigns,
         completed: completedCampaigns

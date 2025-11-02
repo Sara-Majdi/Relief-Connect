@@ -12,9 +12,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Progress } from "@/components/ui/progress"
-import { Plus, Edit, Trash2, Eye, DollarSign, Package, Users, Clock, CheckCircle, AlertTriangle, BarChart3, Loader2 } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, DollarSign, Package, Users, Clock, CheckCircle, AlertTriangle, BarChart3, Loader2, TrendingUp, MessageSquare, Calendar, Target } from "lucide-react"
 import Link from "next/link"
 
 export default function NGODashboard() {
@@ -29,11 +30,13 @@ export default function NGODashboard() {
   const [campaigns, setCampaigns] = useState([])
   const [selectedItem, setSelectedItem] = useState(null)
   const [selectedUpdate, setSelectedUpdate] = useState(null)
+  const [selectedCampaign, setSelectedCampaign] = useState(null)
+  const [isCampaignDetailOpen, setIsCampaignDetailOpen] = useState(false)
+  const [isCampaignAnalyticsOpen, setIsCampaignAnalyticsOpen] = useState(false)
   const [stats, setStats] = useState({
     totalRaised: 0,
     activeCampaigns: 0,
-    totalDonors: 0,
-    itemsReceived: 0
+    totalDonors: 0
   })
 
   useEffect(() => {
@@ -97,24 +100,10 @@ export default function NGODashboard() {
       const totalDonors = data.reduce((sum, campaign) =>
         sum + (campaign.donors || 0), 0)
 
-      let totalNeeded = 0
-      let totalReceived = 0
-      data.forEach(campaign => {
-        if (campaign.needed_items && Array.isArray(campaign.needed_items)) {
-          campaign.needed_items.forEach(item => {
-            totalNeeded += item.needed || 0
-            totalReceived += item.received || 0
-          })
-        }
-      })
-      const itemsReceivedPercentage = totalNeeded > 0 ?
-        Math.round((totalReceived / totalNeeded) * 100) : 0
-
       setStats({
         totalRaised,
         activeCampaigns: data.length,
-        totalDonors,
-        itemsReceived: itemsReceivedPercentage
+        totalDonors
       })
 
       setLoading(false)
@@ -122,23 +111,6 @@ export default function NGODashboard() {
       console.error('Error fetching campaigns:', error)
       setLoading(false)
     }
-  }
-
-  const getAllNeededItems = () => {
-    const items = []
-    campaigns.forEach(campaign => {
-      if (campaign.needed_items && Array.isArray(campaign.needed_items)) {
-        campaign.needed_items.forEach((item, index) => {
-          items.push({
-            ...item,
-            campaign_id: campaign.id,
-            campaign_title: campaign.title,
-            item_index: index
-          })
-        })
-      }
-    })
-    return items
   }
 
   const getAllUpdates = () => {
@@ -156,75 +128,6 @@ export default function NGODashboard() {
       }
     })
     return updates.sort((a, b) => new Date(b.date) - new Date(a.date))
-  }
-
-  const addNeededItem = async (campaignId, newItem) => {
-    try {
-      const campaign = campaigns.find(c => c.id === campaignId)
-      if (!campaign) return
-
-      const updatedItems = [...(campaign.needed_items || []), newItem]
-
-      const { error } = await supabase
-        .from('campaigns')
-        .update({ needed_items: updatedItems })
-        .eq('id', campaignId)
-
-      if (error) throw error
-
-      await fetchCampaigns(ngoInfo.id)
-      setIsAddItemOpen(false)
-    } catch (error) {
-      console.error('Error adding item:', error)
-      alert('Failed to add item. Please try again.')
-    }
-  }
-
-  const updateNeededItem = async (campaignId, itemIndex, updatedItem) => {
-    try {
-      const campaign = campaigns.find(c => c.id === campaignId)
-      if (!campaign) return
-
-      const updatedItems = [...(campaign.needed_items || [])]
-      updatedItems[itemIndex] = updatedItem
-
-      const { error } = await supabase
-        .from('campaigns')
-        .update({ needed_items: updatedItems })
-        .eq('id', campaignId)
-
-      if (error) throw error
-
-      await fetchCampaigns(ngoInfo.id)
-      setIsEditItemOpen(false)
-      setSelectedItem(null)
-    } catch (error) {
-      console.error('Error updating item:', error)
-      alert('Failed to update item.')
-    }
-  }
-
-  const deleteNeededItem = async (campaignId, itemIndex) => {
-    if (!confirm('Are you sure you want to delete this item?')) return
-
-    try {
-      const campaign = campaigns.find(c => c.id === campaignId)
-      if (!campaign) return
-
-      const updatedItems = (campaign.needed_items || []).filter((_, index) => index !== itemIndex)
-
-      const { error } = await supabase
-        .from('campaigns')
-        .update({ needed_items: updatedItems })
-        .eq('id', campaignId)
-
-      if (error) throw error
-
-      await fetchCampaigns(ngoInfo.id)
-    } catch (error) {
-      console.error('Error deleting item:', error)
-      alert('Failed to delete item.')
-    }
   }
 
   const addUpdate = async (campaignId, newUpdate) => {
@@ -351,12 +254,6 @@ export default function NGODashboard() {
             Campaigns
           </TabsTrigger>
           <TabsTrigger
-            value="items"
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50"
-          >
-            Needed Items
-          </TabsTrigger>
-          <TabsTrigger
             value="updates"
             className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50"
           >
@@ -402,19 +299,6 @@ export default function NGODashboard() {
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">{stats.totalDonors}</div>
                 <p className="text-xs text-gray-500 mt-1">Unique contributors</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-orange-500">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">Items Received</CardTitle>
-                <div className="p-2 bg-orange-50 rounded-lg">
-                  <Package className="h-5 w-5 text-orange-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stats.itemsReceived}%</div>
-                <p className="text-xs text-gray-500 mt-1">of requested items</p>
               </CardContent>
             </Card>
           </div>
@@ -480,13 +364,20 @@ export default function NGODashboard() {
               {campaigns.map((campaign) => {
                 const progress = campaign.goal > 0 ?
                   Math.round(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100) : 0
+                const daysLeft = campaign.target_date ?
+                  Math.max(0, Math.ceil((new Date(campaign.target_date) - new Date()) / (1000 * 60 * 60 * 24))) : 0
                 return (
-                  <Card key={campaign.id} className="hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                          <CardDescription>{campaign.description?.substring(0, 50)}...</CardDescription>
+                  <Card key={campaign.id} className="hover:shadow-xl transition-all duration-200 border-l-4 border-l-blue-500">
+                    {campaign.image_url && (
+                      <div className="h-40 overflow-hidden">
+                        <img src={campaign.image_url} alt={campaign.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg line-clamp-2">{campaign.title}</CardTitle>
+                          <CardDescription className="line-clamp-2 mt-1">{campaign.description}</CardDescription>
                         </div>
                         <Badge className={
                           campaign.urgency === 'critical' ? 'bg-red-600' :
@@ -498,30 +389,85 @@ export default function NGODashboard() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Progress Section */}
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span>Progress</span>
-                          <span>{progress}%</span>
+                          <span className="text-gray-600">Progress</span>
+                          <span className="font-semibold text-blue-600">{progress}%</span>
                         </div>
-                        <Progress value={progress} />
+                        <Progress value={progress} className="h-2" />
                         <div className="flex justify-between text-sm">
-                          <span className="font-medium">RM {(parseFloat(campaign.raised) || 0).toLocaleString()}</span>
+                          <span className="font-bold text-gray-900">RM {(parseFloat(campaign.raised) || 0).toLocaleString()}</span>
                           <span className="text-gray-500">of RM {(parseFloat(campaign.goal) || 0).toLocaleString()}</span>
                         </div>
-                        <p className="text-xs text-gray-500">{campaign.donors || 0} donors</p>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" asChild className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors">
-                          <Link href={`/campaigns/${campaign.id}`}>
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Link>
+
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-purple-600" />
+                          <div>
+                            <p className="text-xs text-gray-500">Donors</p>
+                            <p className="text-sm font-semibold">{campaign.donors || 0}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-orange-600" />
+                          <div>
+                            <p className="text-xs text-gray-500">Days Left</p>
+                            <p className="text-sm font-semibold">{daysLeft}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="grid grid-cols-2 gap-2 pt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedCampaign(campaign)
+                            setIsCampaignDetailOpen(true)
+                          }}
+                          className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
                         </Button>
-                        <Button size="sm" variant="outline" asChild className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          asChild
+                          className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors"
+                        >
                           <Link href={`/ngo/campaigns/${campaign.id}/edit`}>
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
                           </Link>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedCampaign(campaign)
+                            setIsCampaignAnalyticsOpen(true)
+                          }}
+                          className="hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-colors"
+                        >
+                          <BarChart3 className="h-4 w-4 mr-1" />
+                          Analytics
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedCampaign(campaign)
+                            setIsAddUpdateOpen(true)
+                          }}
+                          className="hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-colors"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Update
                         </Button>
                       </div>
                     </CardContent>
@@ -530,135 +476,6 @@ export default function NGODashboard() {
               })}
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="items" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold">Needed Items</h3>
-              <p className="text-sm text-gray-500">Manage items needed for your campaigns</p>
-            </div>
-            <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
-              <DialogTrigger asChild>
-                <Button disabled={campaigns.length === 0} className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item Request
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-white">
-                <DialogHeader>
-                  <DialogTitle>Add Item Request</DialogTitle>
-                  <DialogDescription>Add a new item that your campaign needs</DialogDescription>
-                </DialogHeader>
-                <AddItemForm
-                  campaigns={campaigns}
-                  onClose={() => setIsAddItemOpen(false)}
-                  onAdd={addNeededItem}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {getAllNeededItems().length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500 mb-4">No items requested yet. Add items that your campaigns need.</p>
-                {campaigns.length === 0 && (
-                  <p className="text-sm text-gray-400">Create a campaign first before adding items.</p>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="shadow-md">
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="font-semibold">Item</TableHead>
-                      <TableHead className="font-semibold">Campaign</TableHead>
-                      <TableHead className="font-semibold">Needed</TableHead>
-                      <TableHead className="font-semibold">Received</TableHead>
-                      <TableHead className="font-semibold">Progress</TableHead>
-                      <TableHead className="font-semibold">Priority</TableHead>
-                      <TableHead className="font-semibold">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getAllNeededItems().map((item, idx) => {
-                      const progress = item.needed > 0 ? Math.round((item.received / item.needed) * 100) : 0
-                      return (
-                        <TableRow key={idx} className="hover:bg-gray-50 transition-colors">
-                          <TableCell className="font-medium">{item.item}</TableCell>
-                          <TableCell>{item.campaign_title}</TableCell>
-                          <TableCell>{item.needed}</TableCell>
-                          <TableCell>{item.received}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Progress value={progress} className="w-16" />
-                              <span className="text-sm">{progress}%</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={
-                              item.priority === 'critical' ? 'bg-red-600' :
-                              item.priority === 'high' ? 'bg-amber-600' :
-                              item.priority === 'medium' ? 'bg-blue-600' :
-                              progress === 100 ? 'bg-green-600' : 'bg-gray-600'
-                            }>
-                              {progress === 100 ? 'Complete' : item.priority || 'Medium'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedItem({ ...item })
-                                  setIsEditItemOpen(true)
-                                }}
-                                className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => deleteNeededItem(item.campaign_id, item.item_index)}
-                                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-
-          <Dialog open={isEditItemOpen} onOpenChange={setIsEditItemOpen}>
-            <DialogContent className="bg-white">
-              <DialogHeader>
-                <DialogTitle>Edit Item Request</DialogTitle>
-                <DialogDescription>Update item details and progress</DialogDescription>
-              </DialogHeader>
-              {selectedItem && (
-                <EditItemForm
-                  item={selectedItem}
-                  onClose={() => {
-                    setIsEditItemOpen(false)
-                    setSelectedItem(null)
-                  }}
-                  onUpdate={(updatedItem) => updateNeededItem(selectedItem.campaign_id, selectedItem.item_index, updatedItem)}
-                />
-              )}
-            </DialogContent>
-          </Dialog>
         </TabsContent>
 
         <TabsContent value="updates" className="space-y-6">
@@ -681,7 +498,11 @@ export default function NGODashboard() {
                 </DialogHeader>
                 <AddUpdateForm
                   campaigns={campaigns}
-                  onClose={() => setIsAddUpdateOpen(false)}
+                  selectedCampaignId={selectedCampaign?.id}
+                  onClose={() => {
+                    setIsAddUpdateOpen(false)
+                    setSelectedCampaign(null)
+                  }}
                   onAdd={addUpdate}
                 />
               </DialogContent>
@@ -776,215 +597,281 @@ export default function NGODashboard() {
           </Dialog>
         </TabsContent>
       </Tabs>
+
+      {/* Campaign Detail Sheet */}
+      <Sheet open={isCampaignDetailOpen} onOpenChange={setIsCampaignDetailOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          {selectedCampaign && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{selectedCampaign.title}</SheetTitle>
+                <SheetDescription>
+                  Campaign Details & Overview
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-6 py-6">
+                {/* Campaign Image */}
+                {selectedCampaign.image_url && (
+                  <div className="rounded-lg overflow-hidden">
+                    <img
+                      src={selectedCampaign.image_url}
+                      alt={selectedCampaign.title}
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <DollarSign className="h-8 w-8 mx-auto text-green-600 mb-2" />
+                        <p className="text-2xl font-bold text-green-600">
+                          RM {(parseFloat(selectedCampaign.raised) || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-500">Raised</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <Target className="h-8 w-8 mx-auto text-blue-600 mb-2" />
+                        <p className="text-2xl font-bold text-blue-600">
+                          RM {(parseFloat(selectedCampaign.goal) || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-500">Goal</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <Users className="h-8 w-8 mx-auto text-purple-600 mb-2" />
+                        <p className="text-2xl font-bold text-purple-600">
+                          {selectedCampaign.donors || 0}
+                        </p>
+                        <p className="text-sm text-gray-500">Donors</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <TrendingUp className="h-8 w-8 mx-auto text-orange-600 mb-2" />
+                        <p className="text-2xl font-bold text-orange-600">
+                          {selectedCampaign.goal > 0 ? Math.round(((parseFloat(selectedCampaign.raised) || 0) / parseFloat(selectedCampaign.goal)) * 100) : 0}%
+                        </p>
+                        <p className="text-sm text-gray-500">Progress</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Details */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Campaign Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Description</p>
+                      <p className="text-sm mt-1">{selectedCampaign.description}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Location</p>
+                        <p className="text-sm mt-1">{selectedCampaign.location || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Disaster Type</p>
+                        <p className="text-sm mt-1 capitalize">{selectedCampaign.disaster || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Urgency</p>
+                        <Badge className={
+                          selectedCampaign.urgency === 'critical' ? 'bg-red-600' :
+                          selectedCampaign.urgency === 'high' || selectedCampaign.urgency === 'urgent' ? 'bg-amber-600' :
+                          'bg-blue-600'
+                        }>
+                          {selectedCampaign.urgency || 'Active'}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Beneficiaries</p>
+                        <p className="text-sm mt-1">{selectedCampaign.beneficiaries || 0} families</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button asChild className="flex-1">
+                    <Link href={`/ngo/campaigns/${selectedCampaign.id}/edit`}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Campaign
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link href={`/campaigns/${selectedCampaign.id}`}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Public Page
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Campaign Analytics Sheet */}
+      <Sheet open={isCampaignAnalyticsOpen} onOpenChange={setIsCampaignAnalyticsOpen}>
+        <SheetContent className="bg-white w-full sm:max-w-2xl overflow-y-auto">
+          {selectedCampaign && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Campaign Analytics</SheetTitle>
+                <SheetDescription>
+                  {selectedCampaign.title}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-6 py-6">
+                {/* Performance Metrics */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Performance Overview</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium">Funding Progress</span>
+                        <span className="text-sm text-gray-500">
+                          {selectedCampaign.goal > 0 ? Math.round(((parseFloat(selectedCampaign.raised) || 0) / parseFloat(selectedCampaign.goal)) * 100) : 0}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={selectedCampaign.goal > 0 ? ((parseFloat(selectedCampaign.raised) || 0) / parseFloat(selectedCampaign.goal)) * 100 : 0}
+                        className="h-3"
+                      />
+                      <div className="flex justify-between mt-1">
+                        <span className="text-xs text-gray-500">
+                          RM {(parseFloat(selectedCampaign.raised) || 0).toLocaleString()} raised
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          RM {(parseFloat(selectedCampaign.goal) - parseFloat(selectedCampaign.raised) || 0).toLocaleString()} remaining
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Avg Donation</p>
+                        <p className="text-lg font-bold text-blue-600">
+                          RM {selectedCampaign.donors > 0 ? Math.round(parseFloat(selectedCampaign.raised) / selectedCampaign.donors).toLocaleString() : 0}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Total Donors</p>
+                        <p className="text-lg font-bold text-purple-600">
+                          {selectedCampaign.donors || 0}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Days Left</p>
+                        <p className="text-lg font-bold text-orange-600">
+                          {selectedCampaign.target_date ?
+                            Math.max(0, Math.ceil((new Date(selectedCampaign.target_date) - new Date()) / (1000 * 60 * 60 * 24)))
+                            : 'N/A'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Timeline */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Campaign Timeline</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium">Campaign Started</p>
+                        <p className="text-xs text-gray-500">
+                          {selectedCampaign.start_date ? new Date(selectedCampaign.start_date).toLocaleDateString('en-MY', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium">Current Progress</p>
+                        <p className="text-xs text-gray-500">
+                          {selectedCampaign.goal > 0 ? Math.round(((parseFloat(selectedCampaign.raised) || 0) / parseFloat(selectedCampaign.goal)) * 100) : 0}% of goal achieved
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-orange-600 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium">Target Date</p>
+                        <p className="text-xs text-gray-500">
+                          {selectedCampaign.target_date ? new Date(selectedCampaign.target_date).toLocaleDateString('en-MY', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsCampaignAnalyticsOpen(false)
+                      setIsAddUpdateOpen(true)
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Post Update
+                  </Button>
+                  <Button
+                    variant="outline"
+                    asChild
+                  >
+                    <Link href={`/ngo/campaigns/${selectedCampaign.id}/edit`}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Campaign
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
 
 // Form Components
-function AddItemForm({ campaigns, onClose, onAdd }) {
-  const [formData, setFormData] = useState({
-    item: '',
-    campaign_id: '',
-    needed: '',
-    received: 0,
-    priority: 'medium',
-    description: ''
-  })
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!formData.item || !formData.campaign_id || !formData.needed) {
-      alert('Please fill in all required fields')
-      return
-    }
-
-    const itemData = {
-      item: formData.item,
-      needed: parseInt(formData.needed),
-      received: parseInt(formData.received),
-      priority: formData.priority,
-      description: formData.description
-    }
-
-    onAdd(formData.campaign_id, itemData)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Item Name *</Label>
-        <Input
-          placeholder="e.g., Blankets, Water Bottles"
-          value={formData.item}
-          onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Campaign *</Label>
-        <Select value={formData.campaign_id} onValueChange={(value) => setFormData({ ...formData, campaign_id: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select campaign" />
-          </SelectTrigger>
-          <SelectContent className="bg-white">
-            {campaigns.map(campaign => (
-              <SelectItem key={campaign.id} value={campaign.id}>{campaign.title}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Quantity Needed *</Label>
-          <Input
-            type="number"
-            placeholder="100"
-            value={formData.needed}
-            onChange={(e) => setFormData({ ...formData, needed: e.target.value })}
-            required
-            min="1"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Already Received</Label>
-          <Input
-            type="number"
-            placeholder="0"
-            value={formData.received}
-            onChange={(e) => setFormData({ ...formData, received: e.target.value })}
-            min="0"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Priority</Label>
-        <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-white">
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Description</Label>
-        <Textarea
-          placeholder="Describe the item specifications..."
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-        <Button type="submit">Add Item</Button>
-      </div>
-    </form>
-  )
-}
-
-function EditItemForm({ item, onClose, onUpdate }) {
-  const [formData, setFormData] = useState({
-    item: item.item || '',
-    needed: item.needed || 0,
-    received: item.received || 0,
-    priority: item.priority || 'medium',
-    description: item.description || ''
-  })
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!formData.item || !formData.needed) {
-      alert('Please fill in all required fields')
-      return
-    }
-
-    onUpdate({
-      item: formData.item,
-      needed: parseInt(formData.needed),
-      received: parseInt(formData.received),
-      priority: formData.priority,
-      description: formData.description
-    })
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Item Name *</Label>
-        <Input
-          value={formData.item}
-          onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Quantity Needed *</Label>
-          <Input
-            type="number"
-            value={formData.needed}
-            onChange={(e) => setFormData({ ...formData, needed: e.target.value })}
-            required
-            min="1"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Received *</Label>
-          <Input
-            type="number"
-            value={formData.received}
-            onChange={(e) => setFormData({ ...formData, received: e.target.value })}
-            required
-            min="0"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Priority</Label>
-        <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-white">
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Description</Label>
-        <Textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-        <Button type="submit">Update Item</Button>
-      </div>
-    </form>
-  )
-}
-
-function AddUpdateForm({ campaigns, onClose, onAdd }) {
+function AddUpdateForm({ campaigns, selectedCampaignId, onClose, onAdd }) {
   const [formData, setFormData] = useState({
     title: '',
-    campaign_id: '',
+    campaign_id: selectedCampaignId || '',
     description: ''
   })
 

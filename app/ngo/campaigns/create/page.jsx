@@ -79,11 +79,6 @@ export default function CreateCampaignPage() {
       { category: "Emergency Supplies", allocated: "", spent: "0" },
       { category: "Transportation", allocated: "", spent: "0" },
       { category: "Administrative", allocated: "", spent: "0" }
-    ],
-    
-    // Needed Items
-    neededItems: [
-      { name: "", quantity: "", priority: "medium", description: "" }
     ]
   })
 
@@ -125,30 +120,6 @@ export default function CreateCampaignPage() {
     }))
   }
 
-  const handleNeededItemChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      neededItems: prev.neededItems.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }))
-  }
-
-  //Add new empty array
-  const addNeededItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      neededItems: [...prev.neededItems, { name: "", quantity: "", priority: "medium", description: "" }]
-    }))
-  }
-
-  //Removes a needed item
-  const removeNeededItem = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      neededItems: prev.neededItems.filter((_, i) => i !== index)
-    }))
-  }
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0]
@@ -245,7 +216,6 @@ export default function CreateCampaignPage() {
         image_url: imageUrl,
         verified: false,
         financial_breakdown: formData.financialBreakdown.filter(item => item.category && item.allocated),
-        needed_items: formData.neededItems.filter(item => item.name && item.quantity),
         donors: 0,
         ngo_user_id: formData.ngo_user_id, // Use NGO user ID from session
         ngo: formData.ngo
@@ -392,14 +362,6 @@ export default function CreateCampaignPage() {
           >
             <TrendingUp className="h-4 w-4" />
             Fundraising Items
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="items"
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
-          >
-            <Package className="h-4 w-4" />
-            Needed Items
           </TabsTrigger>
 
         </TabsList>
@@ -693,87 +655,6 @@ export default function CreateCampaignPage() {
                 items={fundraisingItems}
                 onChange={setFundraisingItems}
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Needed Items Tab */}
-        <TabsContent value="items" className="space-y-6">
-          <Card className="shadow-lg border-l-4 border-l-orange-500 hover:shadow-xl transition-shadow duration-200">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-white">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Package className="h-5 w-5 text-orange-600" />
-                </div>
-                Needed Items
-              </CardTitle>
-              <CardDescription>What physical items do you need from donors?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.neededItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-2 border-orange-100 rounded-lg bg-orange-50/30 hover:border-orange-300 transition-colors">
-                  <div className="space-y-2">
-                    <Label>Item Name</Label>
-                    <Input
-                      placeholder="e.g., Blankets, Water Bottles"
-                      value={item.name}
-                      onChange={(e) => handleNeededItemChange(index, 'name', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Quantity Needed</Label>
-                    <Input
-                      type="number"
-                      placeholder="100"
-                      value={item.quantity}
-                      onChange={(e) => handleNeededItemChange(index, 'quantity', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select value={item.priority} onValueChange={(value) => handleNeededItemChange(index, 'priority', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Item specifications"
-                        value={item.description}
-                        onChange={(e) => handleNeededItemChange(index, 'description', e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeNeededItem(index)}
-                        disabled={formData.neededItems.length === 1}
-                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addNeededItem}
-                className="w-full hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-colors border-2"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Needed Item
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
