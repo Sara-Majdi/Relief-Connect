@@ -16,20 +16,28 @@ import {
   Calendar,
   Users,
   Package,
-  DollarSign,
   Truck,
   Download,
   Loader2,
+  AlertTriangle, 
+  DollarSign
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
+import ItemProgressCards from "@/components/campaign/ItemProgressCards"
+import AllocationBreakdown from "@/components/campaign/AllocationBreakdown"
+import ItemDonationModal from "@/components/donation/ItemDonationModal"
+import { } from 'lucide-react';
 
 export default function CampaignDetailPage({ params }) {
   const [activeTab, setActiveTab] = useState("overview")
   const [campaign, setCampaign] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [fundraisingItems, setFundraisingItems] = useState([])
+  const [isDonationModalOpen, setIsDonationModalOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState(null)
 
   // Helper function to format dates
   const formatDate = (dateString) => {
@@ -89,6 +97,18 @@ export default function CampaignDetailPage({ params }) {
             createdAt: data.created_at || data.createdAt,
           }
           setCampaign(mappedCampaign)
+        }
+
+        // Fetch fundraising items via API
+        try {
+          const itemsResponse = await fetch(`/api/campaigns/${params.id}/items-public`)
+          const itemsResult = await itemsResponse.json()
+
+          if (itemsResult.success && itemsResult.items) {
+            setFundraisingItems(itemsResult.items)
+          }
+        } catch (itemsError) {
+          console.error('Error fetching fundraising items:', itemsError)
         }
       } catch (err) {
         console.error("Error fetching campaign:", err)
@@ -319,10 +339,9 @@ export default function CampaignDetailPage({ params }) {
                     <Users className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="text-3xl font-bold text-blue-600 mb-1">{campaign.beneficiaries || 0}</div>
-                  <div className="text-sm text-gray-600 font-medium">In Need</div>
+                  <div className="text-sm text-gray-600 font-medium">Families Helped</div>
                 </CardContent>
               </Card>
-              {/* 
               <Card className="text-center shadow-md hover:shadow-xl transition-all hover:-translate-y-1 border-0 bg-gradient-to-br from-green-50 to-white">
                 <CardContent className="p-6">
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -334,7 +353,6 @@ export default function CampaignDetailPage({ params }) {
                   <div className="text-sm text-gray-600 font-medium">Locations</div>
                 </CardContent>
               </Card>
-              */}
               <Card className="text-center shadow-md hover:shadow-xl transition-all hover:-translate-y-1 border-0 bg-gradient-to-br from-purple-50 to-white">
                 <CardContent className="p-6">
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -403,12 +421,13 @@ export default function CampaignDetailPage({ params }) {
                     <Button
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
                       size="lg"
-                      asChild
+                      onClick={() => {
+                        setSelectedItem(null)
+                        setIsDonationModalOpen(true)
+                      }}
                     >
-                      <Link href={`/donate?campaign=${campaign.id}`}>
-                        <Heart className="h-5 w-5 mr-2" />
-                        Donate Money
-                      </Link>
+                      <Heart className="h-5 w-5 mr-2" />
+                      Donate Money
                     </Button>
                     <Button
                       variant="outline"
@@ -472,34 +491,46 @@ export default function CampaignDetailPage({ params }) {
       {/* Detailed Tabs */}
       <div className="container mx-auto w-full px-4 md:px-6 pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white shadow-lg border-0 h-14 p-1.5">
+          <TabsList className="grid w-full grid-cols-7 bg-white shadow-lg border-0 h-14 p-1.5">
             <TabsTrigger
               value="overview"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="updates"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
             >
               Updates
             </TabsTrigger>
             <TabsTrigger
+              value="fundraising"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
+            >
+              Fund Items
+            </TabsTrigger>
+            <TabsTrigger
+              value="breakdown"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
+            >
+              Breakdown
+            </TabsTrigger>
+            <TabsTrigger
               value="items"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
             >
               Needed Items
             </TabsTrigger>
             <TabsTrigger
               value="finances"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
             >
               Finances
             </TabsTrigger>
             <TabsTrigger
               value="impact"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
             >
               Impact
             </TabsTrigger>
@@ -587,6 +618,55 @@ export default function CampaignDetailPage({ params }) {
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="fundraising" className="space-y-6">
+            {fundraisingItems.length > 0 ? (
+              <ItemProgressCards
+                items={fundraisingItems}
+                onDonateToItem={(item) => {
+                  setSelectedItem(item)
+                  setIsDonationModalOpen(true)
+                }}
+                showFilters={true}
+              />
+            ) : (
+              <Card className="shadow-lg border-0">
+                <CardContent className="text-center py-16">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Package className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 text-lg">No fundraising items set up for this campaign.</p>
+                  <p className="text-gray-400 text-sm mt-2">You can still donate to the general campaign fund!</p>
+                  <Button
+                    className="mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    onClick={() => setIsDonationModalOpen(true)}
+                  >
+                    <Heart className="h-4 w-4 mr-2" />
+                    Donate to Campaign
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="breakdown" className="space-y-6">
+            {fundraisingItems.length > 0 ? (
+              <AllocationBreakdown
+                campaign={campaign}
+                items={fundraisingItems}
+              />
+            ) : (
+              <Card className="shadow-lg border-0">
+                <CardContent className="text-center py-16">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <DollarSign className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 text-lg">No allocation breakdown available.</p>
+                  <p className="text-gray-400 text-sm mt-2">This campaign uses traditional fundraising without item breakdowns.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="items" className="space-y-6">
@@ -863,6 +943,47 @@ export default function CampaignDetailPage({ params }) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Item Donation Modal */}
+      <ItemDonationModal
+        isOpen={isDonationModalOpen}
+        onClose={() => {
+          setIsDonationModalOpen(false)
+          setSelectedItem(null)
+        }}
+        campaign={{
+          ...campaign,
+          items: fundraisingItems
+        }}
+        selectedItem={selectedItem}
+        onSubmit={async (donationData) => {
+          // Create Stripe checkout session
+          const response = await fetch('/api/checkout/donation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              campaignId: campaign.id,
+              campaignTitle: campaign.title,
+              ngoName: campaign.ngo,
+              amount: Math.round(donationData.total_amount * 100), // Convert to cents
+              tipPercentage: donationData.tip_amount > 0 ? (donationData.tip_amount / donationData.amount) * 100 : 0,
+              isRecurring: donationData.is_recurring || false,
+              recurringInterval: donationData.recurring_interval || 'monthly',
+              // Item-specific fields
+              itemId: donationData.item_id || null,
+              itemName: selectedItem?.name || null,
+              allocationType: donationData.allocation_type || 'general'
+            })
+          })
+
+          const { url } = await response.json()
+
+          // Redirect to Stripe Checkout
+          if (url) {
+            window.location.href = url
+          }
+        }}
+      />
     </div>
   )
 }

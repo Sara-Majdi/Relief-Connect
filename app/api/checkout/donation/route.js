@@ -5,19 +5,31 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { 
-      campaignId, 
-      amount, 
-      tipPercentage, 
-      isRecurring, 
+    const {
+      campaignId,
+      amount,
+      tipPercentage,
+      isRecurring,
       recurringInterval,
       campaignTitle,
-      ngoName 
+      ngoName,
+      // New fields for item-based donations
+      itemId = null,
+      allocationType = 'general', // 'general' or 'item'
+      itemName = null
     } = body
 
     if (!campaignId || !amount || amount <= 0) {
       return NextResponse.json(
         { error: 'Invalid donation parameters' },
+        { status: 400 }
+      )
+    }
+
+    // Validate item donation parameters
+    if (allocationType === 'item' && !itemId) {
+      return NextResponse.json(
+        { error: 'Item ID is required for item-specific donations' },
         { status: 400 }
       )
     }
@@ -33,14 +45,20 @@ export async function POST(request) {
     const tipAmount = amount - baseAmount
 
     // Create line items
+    const donationDescription = allocationType === 'item' && itemName
+      ? `Donation to "${itemName}" in ${campaignTitle}`
+      : `Donation to ${campaignTitle}`;
+
     const lineItems = [
       {
         price_data: {
           currency: 'myr', // Malaysian Ringgit
           unit_amount: baseAmount,
           product_data: {
-            name: `Donation to ${campaignTitle}`,
-            description: `Supporting ${ngoName}'s campaign`,
+            name: donationDescription,
+            description: allocationType === 'item'
+              ? `Item-specific donation supporting "${itemName}" - ${ngoName}`
+              : `General campaign donation supporting ${ngoName}`,
             images: [], // Could add campaign image here
           },
         },
@@ -79,7 +97,11 @@ export async function POST(request) {
         isRecurring: isRecurring.toString(),
         recurringInterval: recurringInterval || 'monthly',
         campaignTitle,
-        ngoName
+        ngoName,
+        // Item-based donation metadata
+        itemId: itemId || '',
+        allocationType,
+        itemName: itemName || ''
       },
       customer_email: user?.email || undefined,
     }

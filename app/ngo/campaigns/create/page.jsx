@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
-import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package, TrendingUp } from "lucide-react"
 import Link from "next/link"
+import ItemAllocationForm from "@/components/campaign/ItemAllocationForm"
 
 export default function CreateCampaignPage() {
   const supabase = createClient();
@@ -85,6 +86,9 @@ export default function CreateCampaignPage() {
       { name: "", quantity: "", priority: "medium", description: "" }
     ]
   })
+
+  // Fundraising Items (monetary allocation per item)
+  const [fundraisingItems, setFundraisingItems] = useState([])
 
 
 
@@ -268,6 +272,43 @@ export default function CreateCampaignPage() {
         throw insertError
       }
 
+      // Create fundraising items if any
+      if (fundraisingItems.length > 0) {
+        for (const item of fundraisingItems) {
+          // Skip items without name or target amount
+          if (!item.name || !item.target_amount || parseFloat(item.target_amount) <= 0) {
+            continue
+          }
+
+          try {
+            const itemData = {
+              campaign_id: data.id,
+              name: item.name,
+              description: item.description || null,
+              target_amount: parseFloat(item.target_amount),
+              quantity: item.quantity ? parseInt(item.quantity) : null,
+              unit_cost: item.unit_cost ? parseFloat(item.unit_cost) : null,
+              priority: item.priority || 'medium',
+              category: item.category || null,
+              image_url: item.image_url || null,
+              display_order: item.display_order || 0,
+              current_amount: 0,
+              is_active: true
+            }
+
+            const { error: itemError } = await supabase
+              .from('campaign_items')
+              .insert([itemData])
+
+            if (itemError) {
+              console.error('Failed to create fundraising item:', item.name, itemError)
+            }
+          } catch (itemErr) {
+            console.error('Error creating fundraising item:', itemErr)
+          }
+        }
+      }
+
       // Redirect to campaign detail page
       router.push(`/campaigns/${data.id}`)
     } 
@@ -320,7 +361,7 @@ export default function CreateCampaignPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1.5 rounded-lg h-14 shadow-sm border border-gray-200">
+        <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1.5 rounded-lg h-14 shadow-sm border border-gray-200">
           <TabsTrigger
             value="basic"
             className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
@@ -343,6 +384,14 @@ export default function CreateCampaignPage() {
           >
             <DollarSign className="h-4 w-4" />
             Finances
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="fundraising"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Fundraising Items
           </TabsTrigger>
 
           <TabsTrigger
@@ -623,6 +672,31 @@ export default function CreateCampaignPage() {
           </Card>
         </TabsContent>
 
+        {/* Fundraising Items Tab */}
+        <TabsContent value="fundraising" className="space-y-6">
+          <Card className="shadow-lg border-l-4 border-l-green-500 hover:shadow-xl transition-shadow duration-200">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-white">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                </div>
+                Fundraising Items (Optional)
+              </CardTitle>
+              <CardDescription>
+                Break down your campaign goal into specific items for transparent fundraising.
+                Donors can choose to fund specific items or donate to the general campaign.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ItemAllocationForm
+                campaignGoal={parseFloat(formData.goal) || 0}
+                items={fundraisingItems}
+                onChange={setFundraisingItems}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Needed Items Tab */}
         <TabsContent value="items" className="space-y-6">
           <Card className="shadow-lg border-l-4 border-l-orange-500 hover:shadow-xl transition-shadow duration-200">
@@ -714,7 +788,7 @@ export default function CreateCampaignPage() {
           <Button
             variant="outline"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances', 'items']
+              const tabs = ['basic', 'details', 'finances', 'fundraising', 'items']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex > 0) {
                 setActiveTab(tabs[currentIndex - 1])
@@ -728,7 +802,7 @@ export default function CreateCampaignPage() {
           <Button
             className="bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances', 'items']
+              const tabs = ['basic', 'details', 'finances', 'fundraising', 'items']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex < tabs.length - 1) {
                 setActiveTab(tabs[currentIndex + 1])
