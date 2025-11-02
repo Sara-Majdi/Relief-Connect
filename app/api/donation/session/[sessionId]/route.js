@@ -35,7 +35,11 @@ export async function GET(request, { params }) {
       isRecurring,
       recurringInterval,
       campaignTitle,
-      ngoName
+      ngoName,
+      // Item-based donation fields
+      itemId,
+      allocationType,
+      itemName
     } = session.metadata
 
     // Validate required metadata
@@ -89,6 +93,10 @@ export async function GET(request, { params }) {
         stripe_session_id: sessionId,
         donor_name: donorName,
         donor_email: donorEmail,
+        // Item-based donation fields
+        item_id: itemId || null,
+        allocation_type: allocationType || 'general',
+        auto_distributed: false, // Will be set by trigger if general donation
         created_at: new Date().toISOString()
       }
 
@@ -126,6 +134,10 @@ export async function GET(request, { params }) {
       donorName,
       donorEmail,
       status: 'completed',
+      // Item-based donation info
+      itemId: itemId || null,
+      itemName: itemName || null,
+      allocationType: allocationType || 'general',
       createdAt: new Date().toISOString()
     }
 

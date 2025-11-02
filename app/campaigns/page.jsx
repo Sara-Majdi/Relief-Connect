@@ -116,152 +116,248 @@ export default function CampaignsPage() {
     }
 
     return (
-        <div className="container mx-auto w-full px-4 md:px-6 py-8 md:py-12">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold mb-2">Disaster Relief Campaigns</h1>
-                    <p className="text-gray-500">Browse and support verified disaster relief campaigns across Malaysia</p>
-                    {/* Show results count */}
-                    <p className="text-sm text-gray-400 mt-1">
-                        {filteredCampaigns.length} campaign{filteredCampaigns.length !== 1 ? 's' : ''} found
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                        <Filter className="h-4 w-4 mr-2" /> Filter
-                    </Button>
-                    <Select value={sortBy} onValueChange={handleSortChange}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                            <SelectItem value="newest">Newest First</SelectItem>
-                            <SelectItem value="urgent">Most Urgent</SelectItem>
-                            <SelectItem value="progress">Progress</SelectItem>
-                            <SelectItem value="goal">Funding Goal</SelectItem>
-                        </SelectContent>
-                    </Select>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+            {/* Hero Section */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16 md:py-20 shadow-lg">
+                <div className="container mx-auto px-4 md:px-6">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
+                            Make a Difference Today
+                        </h1>
+                        <p className="text-lg md:text-xl text-blue-100 mb-6">
+                            Support verified disaster relief campaigns and help communities across Malaysia
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-4 text-sm">
+                            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                                <CheckCircle className="h-4 w-4" />
+                                <span>100% Verified NGOs</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                                <AlertTriangle className="h-4 w-4" />
+                                <span>Real-time Updates</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                                <Clock className="h-4 w-4" />
+                                <span>Transparent Tracking</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="md:col-span-2">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <Input 
-                            placeholder="Search campaigns..." 
-                            className="pl-10"
-                            value={searchQuery}
-                            onChange={handleSearchChange}
-                        />
-                    </div>
-                </div>
-                <div>
-                    <Tabs defaultValue="all" value={selectedDisasterType} onValueChange={handleDisasterTypeChange}>
-                        <TabsList className="w-full border-2">
-                            <TabsTrigger value="all" className="flex-1">
-                                All
-                            </TabsTrigger>
-                            <TabsTrigger value="flood" className="flex-1">
-                                Flood
-                            </TabsTrigger>
-                            <TabsTrigger value="landslide" className="flex-1">
-                                Landslide
-                            </TabsTrigger>
-                            <TabsTrigger value="drought" className="flex-1">
-                                Drought
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </div>
-            </div>
-
-            {/* Show no results message */}
-            {filteredCampaigns.length === 0 && (searchQuery || selectedDisasterType !== "all") && (
-                <div className="text-center py-12">
-                    <div className="text-gray-400 mb-2">
-                        <Search className="h-12 w-12 mx-auto mb-4" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No campaigns found</h3>
-                    <p className="text-gray-500 mb-4">
-                        Try adjusting your search terms or filters to find what you're looking for.
-                    </p>
-                    <Button 
-                        variant="outline" 
-                        onClick={() => {
-                            setSearchQuery("")
-                            setSelectedDisasterType("all")
-                        }}
-                    >
-                        Clear Filters
-                    </Button>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCampaigns.map((campaign) => (
-                    <Card key={campaign.id}>
-                        <CardHeader className="p-0">
-                            <div className="relative h-48 w-full">
-                                <Image
-                                    src={campaign.imageUrl || "/placeholder.svg"}
-                                    fill
-                                    alt={campaign.title}
-                                    className="object-cover rounded-t-lg"
-                                    unoptimized
-                                />
-                                {campaign.status === "Urgent" && (
-                                    <Badge className="absolute top-2 right-2 bg-blue-600" variant="secondary">
-                                        <Clock className="mr-1 h-3 w-3" /> Urgent
-                                    </Badge>
-                                )}
-                                {campaign.status === "Critical" && (
-                                    <Badge className="absolute top-2 right-2 bg-amber-600" variant="secondary">
-                                        <AlertTriangle className="mr-1 h-3 w-3" /> Critical
-                                    </Badge>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="flex items-center gap-2 mb-2">
-                                {campaign.ngoVerified && (
-                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                        <CheckCircle className="mr-1 h-3 w-3" /> Verified NGO
-                                    </Badge>
-                                )}
-                            </div>
-                            <CardTitle className="text-xl mb-2">{campaign.title}</CardTitle>
-                            <CardDescription className="line-clamp-2 mb-4">{campaign.description}</CardDescription>
-                            <div className="space-y-2">
-                                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                    <div
-                                        className="bg-blue-600 h-2.5 rounded-full"
-                                        style={{ width: `${campaign.goal > 0 ? Math.min(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100, 100) : 0}%` }}
-                                    ></div>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="font-medium">RM {(parseFloat(campaign.raised) || 0).toLocaleString()} raised</span>
-                                    <span className="text-gray-500">of RM {(parseFloat(campaign.goal) || 0).toLocaleString()}</span>
-                                </div>
-                            </div>
+            <div className="container mx-auto w-full px-4 md:px-6 py-8 md:py-12">
+                {/* Stats Bar */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 -mt-20">
+                    <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/95 backdrop-blur">
+                        <CardContent className="pt-6">
+                            <div className="text-3xl font-bold text-blue-600 mb-1">{filteredCampaigns.length}</div>
+                            <div className="text-sm text-gray-600">Active Campaigns</div>
                         </CardContent>
-                        <CardFooter className="flex justify-between border-t p-6 pt-4">
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={`/campaigns/${campaign.id}`}>Learn More</Link>
-                            </Button>
-                            <Button size="sm" onClick={() => router.push(`/donate?campaign=${campaign.id}`)}>
-                                Donate
-                            </Button>
-                        </CardFooter>
                     </Card>
-                ))}
-            </div>
-
-            {filteredCampaigns.length > 0 && (
-                <div className="flex justify-center mt-8">
-                    <Button variant="outline">Load More</Button>
+                    {/* 
+                    <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/95 backdrop-blur">
+                        <CardContent className="pt-6">
+                            <div className="text-3xl font-bold text-green-600 mb-1">
+                                {filteredCampaigns.filter(c => c.ngoVerified).length}
+                            </div>
+                            <div className="text-sm text-gray-600">Verified NGOs</div>
+                        </CardContent>
+                    </Card>
+                    */}
+                    <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/95 backdrop-blur">
+                        <CardContent className="pt-6">
+                            <div className="text-3xl font-bold text-orange-600 mb-1">
+                                {filteredCampaigns.filter(c => c.urgency === "critical" || c.urgency === "urgent").length}
+                            </div>
+                            <div className="text-sm text-gray-600">Urgent Cases</div>
+                        </CardContent>
+                    </Card>
+                    
+                    <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/95 backdrop-blur">
+                        <CardContent className="pt-6">
+                            <div className="text-3xl font-bold text-purple-600 mb-1">
+                                RM {filteredCampaigns.reduce((sum, c) => sum + c.raised, 0).toLocaleString()}
+                            </div>
+                            <div className="text-sm text-gray-600">Total Raised</div>
+                        </CardContent>
+                    </Card>
                 </div>
-            )}
+
+                {/* Filters Section */}
+                <Card className="mb-8 shadow-md border-0">
+                    <CardContent className="pt-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                            <div>
+                                <h2 className="text-xl font-semibold mb-1">Browse Campaigns</h2>
+                                <p className="text-sm text-gray-500">
+                                    Showing {filteredCampaigns.length} campaign{filteredCampaigns.length !== 1 ? 's' : ''}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Select value={sortBy} onValueChange={handleSortChange}>
+                                    <SelectTrigger className="w-[180px] border-2 hover:border-blue-300 transition-colors">
+                                        <SelectValue placeholder="Sort by" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white">
+                                        <SelectItem value="newest">Newest First</SelectItem>
+                                        <SelectItem value="urgent">Most Urgent</SelectItem>
+                                        <SelectItem value="progress">Progress</SelectItem>
+                                        <SelectItem value="goal">Funding Goal</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="md:col-span-2">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                    <Input
+                                        placeholder="Search campaigns by title, description, or disaster type..."
+                                        className="pl-10 border-2 hover:border-blue-300 focus:border-blue-500 transition-colors"
+                                        value={searchQuery}
+                                        onChange={handleSearchChange}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <Tabs defaultValue="all" value={selectedDisasterType} onValueChange={handleDisasterTypeChange}>
+                                    <TabsList className="w-full border-2 bg-gray-50">
+                                        <TabsTrigger value="all" className="flex-1 data-[state=active]:bg-white">
+                                            All
+                                        </TabsTrigger>
+                                        <TabsTrigger value="flood" className="flex-1 data-[state=active]:bg-blue-100">
+                                            Flood
+                                        </TabsTrigger>
+                                        <TabsTrigger value="landslide" className="flex-1 data-[state=active]:bg-orange-100">
+                                            Landslide
+                                        </TabsTrigger>
+                                        <TabsTrigger value="drought" className="flex-1 data-[state=active]:bg-yellow-100">
+                                            Drought
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                    {/* Show no results message */}
+                {filteredCampaigns.length === 0 && (searchQuery || selectedDisasterType !== "all") && (
+                    <Card className="text-center py-12 shadow-md">
+                        <CardContent>
+                            <div className="text-gray-400 mb-2">
+                                <Search className="h-16 w-16 mx-auto mb-4" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">No campaigns found</h3>
+                            <p className="text-gray-500 mb-6">
+                                Try adjusting your search terms or filters to find what you're looking for.
+                            </p>
+                            <Button
+                                onClick={() => {
+                                    setSearchQuery("")
+                                    setSelectedDisasterType("all")
+                                }}
+                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                            >
+                                Clear Filters
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredCampaigns.map((campaign) => (
+                        <Card key={campaign.id} className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg overflow-hidden">
+                            <CardHeader className="p-0">
+                                <div className="relative h-52 w-full overflow-hidden">
+                                    <Image
+                                        src={campaign.imageUrl || "/placeholder.svg"}
+                                        fill
+                                        alt={campaign.title}
+                                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                        unoptimized
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    {campaign.status === "Urgent" && (
+                                        <Badge className="absolute top-3 right-3 bg-blue-600 shadow-lg animate-pulse">
+                                            <Clock className="mr-1 h-3 w-3" /> Urgent
+                                        </Badge>
+                                    )}
+                                    {campaign.status === "Critical" && (
+                                        <Badge className="absolute top-3 right-3 bg-red-600 shadow-lg animate-pulse">
+                                            <AlertTriangle className="mr-1 h-3 w-3" /> Critical
+                                        </Badge>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="flex items-center gap-2 mb-3">
+                                    {campaign.ngoVerified && (
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 shadow-sm">
+                                            <CheckCircle className="mr-1 h-3 w-3" /> Verified NGO
+                                        </Badge>
+                                    )}
+                                    {campaign.type && (
+                                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                            {campaign.type}
+                                        </Badge>
+                                    )}
+                                </div>
+                                <CardTitle className="text-xl mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
+                                    {campaign.title}
+                                </CardTitle>
+                                <CardDescription className="line-clamp-2 mb-4 text-gray-600">
+                                    {campaign.description}
+                                </CardDescription>
+                                <div className="space-y-3">
+                                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                                        <div
+                                            className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm"
+                                            style={{ width: `${campaign.goal > 0 ? Math.min(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100, 100) : 0}%` }}
+                                        ></div>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="font-semibold text-gray-900">
+                                            RM {(parseFloat(campaign.raised) || 0).toLocaleString()}
+                                        </span>
+                                        <span className="text-gray-500">
+                                            of RM {(parseFloat(campaign.goal) || 0).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="pt-2 text-xs text-gray-500">
+                                        {campaign.goal > 0 ? Math.round(((parseFloat(campaign.raised) || 0) / parseFloat(campaign.goal)) * 100) : 0}% funded
+                                    </div>
+                                </div>
+                            </CardContent>
+                            <CardFooter className="flex gap-3 border-t bg-gray-50 p-4">
+                                <Button variant="outline" size="sm" className="flex-1 hover:bg-white hover:border-blue-400 hover:text-blue-600 transition-colors" asChild>
+                                    <Link href={`/campaigns/${campaign.id}`}>Learn More</Link>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg transition-all"
+                                    onClick={() => router.push(`/donate?campaign=${campaign.id}`)}
+                                >
+                                    Donate Now
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+
+                {filteredCampaigns.length > 0 && (
+                    <div className="flex justify-center mt-12">
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            className="px-8 border-2 hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white hover:border-transparent transition-all shadow-md"
+                        >
+                            Load More Campaigns
+                        </Button>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

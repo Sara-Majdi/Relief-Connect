@@ -131,7 +131,7 @@ const DonorProfileClient = ({ donorData }) => {
                       {[
                         { key: 'overview', label: 'Overview', icon: TrendingUp },
                         { key: 'history', label: 'Donation History', icon: Calendar },
-                        { key: 'impact', label: 'My Impact', icon: Heart }
+                        //{ key: 'impact', label: 'My Impact', icon: Heart }
                       ].map(({ key, label, icon: Icon }) => (
                         <button
                           key={key}
