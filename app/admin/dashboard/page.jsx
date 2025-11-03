@@ -277,31 +277,58 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
-          <p className="text-muted-foreground">Manage your platform operations and monitor activities</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100/50 pb-12">
+      {/* Header Section */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div className="px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                Admin Dashboard
+              </h1>
+              <p className="text-slate-600 mt-1">Manage platform operations and monitor activities</p>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="shadow-sm hover:shadow">
+                <Activity className="mr-2 h-4 w-4" />
+                Activity
+              </Button>
+              <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow">
+                <Download className="mr-2 h-4 w-4" />
+                Export Report
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button>
-          <Download className="mr-2 h-4 w-4" />
-          Export Report
-        </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
-          {/* 
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          */}
-          <TabsTrigger value="ngo-applications">NGO Applications</TabsTrigger>
-          {/*
-          <TabsTrigger value="donor-accounts">Donor Accounts</TabsTrigger>
-          <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          */}
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+      {/* Main Content */}
+      <div className="px-6 pt-6 space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-white p-1 shadow-sm border border-slate-200">
+            {/*
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            */}
+            <TabsTrigger
+              value="ngo-applications"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              NGO Applications
+            </TabsTrigger>
+            {/*
+            <TabsTrigger value="donor-accounts">Donor Accounts</TabsTrigger>
+            <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            */}
+            <TabsTrigger
+              value="analytics"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
 
         {/* Overview Tab */}
         {/*
@@ -419,198 +446,312 @@ export default function AdminDashboard() {
 
         {/* NGO Applications Tab */}
         <TabsContent value="ngo-applications" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">NGO Applications</h3>
-              <p className="text-sm text-muted-foreground">Review and approve NGO registration applications</p>
-            </div>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search applications..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent  className="bg-white">
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="under-review">Under Review</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <CardDescription className="text-xs font-medium uppercase text-slate-600">Pending Review</CardDescription>
+                <CardTitle className="text-3xl font-bold text-amber-600">
+                  {ngoApplications.filter(app => app.status === 'pending').length}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <CardDescription className="text-xs font-medium uppercase text-slate-600">Approved</CardDescription>
+                <CardTitle className="text-3xl font-bold text-green-600">
+                  {ngoApplications.filter(app => app.status === 'approved').length}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-l-4 border-l-red-500 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <CardDescription className="text-xs font-medium uppercase text-slate-600">Rejected</CardDescription>
+                <CardTitle className="text-3xl font-bold text-red-600">
+                  {ngoApplications.filter(app => app.status === 'rejected').length}
+                </CardTitle>
+              </CardHeader>
+            </Card>
           </div>
 
-          <Card>
+          {/* Search and Filters */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>NGO Applications</CardTitle>
+                  <CardDescription>Review and approve NGO registration applications</CardDescription>
+                </div>
+                <Badge variant="secondary" className="text-sm">
+                  {ngoApplications.length} Total
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search by organization name, email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 border-slate-300 focus:border-blue-500"
+                  />
+                </div>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-48 border-slate-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="under-review">Under Review</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Applications Table */}
+          <Card className="shadow-sm">
             <CardContent className="p-0">
               {loading ? (
-                <div className="p-8 text-center">
-                  <p>Loading NGO applications...</p>
+                <div className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-slate-600">Loading NGO applications...</p>
                 </div>
               ) : ngoApplications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <p>No NGO applications found.</p>
+                <div className="p-12 text-center">
+                  <Building2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-600 font-medium">No NGO applications found</p>
+                  <p className="text-sm text-slate-500 mt-1">New applications will appear here</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Organization</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Registration No.</TableHead>
-                      <TableHead>Submitted</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ngoApplications.map((app) => (
-                      <TableRow key={app.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{app.org_name}</p>
-                            <p className="text-sm text-muted-foreground">{app.org_type}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="text-sm">{app.email}</p>
-                            <p className="text-xs text-muted-foreground">{app.phone}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{app.registration_number}</TableCell>
-                        <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell>{getStatusBadge(app.status)}</TableCell>
-                        <TableCell>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="outline" onClick={() => setSelectedApplication(app)}>
-                                <Eye className="h-4 w-4 mr-1" />
-                                Review
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
-                              <DialogHeader>
-                                <DialogTitle>Review Application</DialogTitle>
-                                <DialogDescription>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 hover:bg-slate-50">
+                        <TableHead className="font-semibold text-slate-700">Organization</TableHead>
+                        <TableHead className="font-semibold text-slate-700">Contact</TableHead>
+                        <TableHead className="font-semibold text-slate-700">Registration No.</TableHead>
+                        <TableHead className="font-semibold text-slate-700">Submitted</TableHead>
+                        <TableHead className="font-semibold text-slate-700">Status</TableHead>
+                        <TableHead className="font-semibold text-slate-700 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ngoApplications.map((app) => (
+                        <TableRow key={app.id} className="hover:bg-slate-50/50 transition-colors">
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-slate-900">{app.org_name}</p>
+                              <p className="text-sm text-slate-500">{app.org_type}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5 text-sm">
+                                <Mail className="h-3.5 w-3.5 text-slate-400" />
+                                <span className="text-slate-600">{app.email}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <Phone className="h-3 w-3 text-slate-400" />
+                                <span className="text-slate-500">{app.phone}</span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm text-slate-700">{app.registration_number}</TableCell>
+                          <TableCell className="text-sm text-slate-600">
+                            {new Date(app.created_at).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(app.status)}</TableCell>
+                          <TableCell className="text-right">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedApplication(app)}
+                                  className="shadow-sm hover:shadow hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                                >
+                                  <Eye className="h-4 w-4 mr-1.5" />
+                                  Review
+                                </Button>
+                              </DialogTrigger>
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white shadow-2xl">
+                              <DialogHeader className="border-b pb-4">
+                                <DialogTitle className="text-2xl font-bold text-slate-900">Review Application</DialogTitle>
+                                <DialogDescription className="text-slate-600">
                                   Review the NGO application details and supporting documents
                                 </DialogDescription>
                               </DialogHeader>
                               {selectedApplication && (
-                                <div className="space-y-6">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <Label className="text-sm font-medium">Organization Name</Label>
-                                      <p className="text-sm mt-1">{selectedApplication.org_name}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Registration Number</Label>
-                                      <p className="text-sm mt-1">{selectedApplication.registration_number}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Organization Type</Label>
-                                      <p className="text-sm mt-1">{selectedApplication.org_type}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Year Established</Label>
-                                      <p className="text-sm mt-1">{selectedApplication.year_established}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Email</Label>
-                                      <p className="text-sm mt-1">{selectedApplication.email}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Phone</Label>
-                                      <p className="text-sm mt-1">{selectedApplication.phone}</p>
+                                <div className="space-y-6 pt-4">
+                                  {/* Organization Info */}
+                                  <div className="bg-gradient-to-br from-blue-50 to-slate-50 p-4 rounded-lg border border-blue-100">
+                                    <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                      <Building2 className="h-5 w-5 text-blue-600" />
+                                      Organization Information
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="bg-white p-3 rounded border border-slate-200">
+                                        <Label className="text-xs font-semibold text-slate-500 uppercase">Organization Name</Label>
+                                        <p className="text-sm mt-1.5 font-medium text-slate-900">{selectedApplication.org_name}</p>
+                                      </div>
+                                      <div className="bg-white p-3 rounded border border-slate-200">
+                                        <Label className="text-xs font-semibold text-slate-500 uppercase">Registration Number</Label>
+                                        <p className="text-sm mt-1.5 font-mono text-slate-900">{selectedApplication.registration_number}</p>
+                                      </div>
+                                      <div className="bg-white p-3 rounded border border-slate-200">
+                                        <Label className="text-xs font-semibold text-slate-500 uppercase">Organization Type</Label>
+                                        <p className="text-sm mt-1.5 text-slate-900">{selectedApplication.org_type}</p>
+                                      </div>
+                                      <div className="bg-white p-3 rounded border border-slate-200">
+                                        <Label className="text-xs font-semibold text-slate-500 uppercase">Year Established</Label>
+                                        <p className="text-sm mt-1.5 text-slate-900">{selectedApplication.year_established}</p>
+                                      </div>
                                     </div>
                                   </div>
 
-                                  <div>
-                                    <Label className="text-sm font-medium">Address</Label>
-                                    <p className="text-sm mt-1">{selectedApplication.address}</p>
-                                    <p className="text-sm">{selectedApplication.city}, {selectedApplication.state} {selectedApplication.postal_code}</p>
+                                  {/* Contact Info */}
+                                  <div className="bg-gradient-to-br from-slate-50 to-gray-50 p-4 rounded-lg border border-slate-200">
+                                    <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                      <Mail className="h-5 w-5 text-slate-600" />
+                                      Contact Information
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="bg-white p-3 rounded border border-slate-200">
+                                        <Label className="text-xs font-semibold text-slate-500 uppercase">Email</Label>
+                                        <p className="text-sm mt-1.5 text-slate-900">{selectedApplication.email}</p>
+                                      </div>
+                                      <div className="bg-white p-3 rounded border border-slate-200">
+                                        <Label className="text-xs font-semibold text-slate-500 uppercase">Phone</Label>
+                                        <p className="text-sm mt-1.5 text-slate-900">{selectedApplication.phone}</p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-3 bg-white p-3 rounded border border-slate-200">
+                                      <Label className="text-xs font-semibold text-slate-500 uppercase">Address</Label>
+                                      <p className="text-sm mt-1.5 text-slate-900">{selectedApplication.address}</p>
+                                      <p className="text-sm text-slate-600">{selectedApplication.city}, {selectedApplication.state} {selectedApplication.postal_code}</p>
+                                    </div>
                                   </div>
 
+                                  {/* Description */}
                                   {selectedApplication.description && (
-                                    <div>
-                                      <Label className="text-sm font-medium">Description</Label>
-                                      <p className="text-sm mt-1">{selectedApplication.description}</p>
+                                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                                      <Label className="text-xs font-semibold text-amber-900 uppercase flex items-center gap-2 mb-2">
+                                        <FileText className="h-4 w-4" />
+                                        Description
+                                      </Label>
+                                      <p className="text-sm text-slate-700 leading-relaxed">{selectedApplication.description}</p>
                                     </div>
                                   )}
 
-                                  <div>
-                                    <Label className="text-sm font-medium mb-2 block">Submitted Documents</Label>
+                                  {/* Documents */}
+                                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                    <Label className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                      <FileText className="h-5 w-5 text-slate-600" />
+                                      Submitted Documents
+                                    </Label>
                                     <div className="space-y-2">
                                       {selectedApplication.registration_cert_url && (
-                                        <div className="flex items-center justify-between p-2 border rounded">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-blue-600" />
-                                            <span className="text-sm">Registration Certificate</span>
+                                        <div className="flex items-center justify-between p-3 bg-white border border-slate-300 rounded-lg hover:border-blue-400 hover:shadow-sm transition-all">
+                                          <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-50 rounded">
+                                              <FileText className="h-4 w-4 text-blue-600" />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-900">Registration Certificate</span>
                                           </div>
-                                          <Button size="sm" variant="ghost" onClick={() => window.open(selectedApplication.registration_cert_url, '_blank')}>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => window.open(selectedApplication.registration_cert_url, '_blank')}
+                                            className="hover:bg-blue-50 hover:text-blue-700"
+                                          >
                                             <Download className="h-4 w-4" />
                                           </Button>
                                         </div>
                                       )}
                                       {selectedApplication.tax_exemption_cert_url && (
-                                        <div className="flex items-center justify-between p-2 border rounded">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-blue-600" />
-                                            <span className="text-sm">Tax Exemption Certificate</span>
+                                        <div className="flex items-center justify-between p-3 bg-white border border-slate-300 rounded-lg hover:border-blue-400 hover:shadow-sm transition-all">
+                                          <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-50 rounded">
+                                              <FileText className="h-4 w-4 text-blue-600" />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-900">Tax Exemption Certificate</span>
                                           </div>
-                                          <Button size="sm" variant="ghost" onClick={() => window.open(selectedApplication.tax_exemption_cert_url, '_blank')}>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => window.open(selectedApplication.tax_exemption_cert_url, '_blank')}
+                                            className="hover:bg-blue-50 hover:text-blue-700"
+                                          >
                                             <Download className="h-4 w-4" />
                                           </Button>
                                         </div>
                                       )}
                                       {selectedApplication.annual_report_url && (
-                                        <div className="flex items-center justify-between p-2 border rounded">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-blue-600" />
-                                            <span className="text-sm">Annual Report</span>
+                                        <div className="flex items-center justify-between p-3 bg-white border border-slate-300 rounded-lg hover:border-blue-400 hover:shadow-sm transition-all">
+                                          <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-50 rounded">
+                                              <FileText className="h-4 w-4 text-blue-600" />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-900">Annual Report</span>
                                           </div>
-                                          <Button size="sm" variant="ghost" onClick={() => window.open(selectedApplication.annual_report_url, '_blank')}>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => window.open(selectedApplication.annual_report_url, '_blank')}
+                                            className="hover:bg-blue-50 hover:text-blue-700"
+                                          >
                                             <Download className="h-4 w-4" />
                                           </Button>
                                         </div>
                                       )}
                                       {!selectedApplication.registration_cert_url && !selectedApplication.tax_exemption_cert_url && !selectedApplication.annual_report_url && (
-                                        <p className="text-sm text-muted-foreground">No documents uploaded</p>
+                                        <div className="text-center py-6">
+                                          <FileText className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                                          <p className="text-sm text-slate-500">No documents uploaded</p>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
 
-                                  <div>
-                                    <Label htmlFor="review-notes">Review Notes</Label>
+                                  {/* Review Notes */}
+                                  <div className="border-t pt-4">
+                                    <Label htmlFor="review-notes" className="text-sm font-semibold text-slate-900 mb-2 block">
+                                      Review Notes
+                                    </Label>
                                     <Textarea
                                       id="review-notes"
-                                      placeholder="Add notes about your decision..."
+                                      placeholder="Add notes about your decision (optional)..."
                                       value={reviewNotes}
                                       onChange={(e) => setReviewNotes(e.target.value)}
-                                      className="mt-2"
+                                      className="mt-2 min-h-[100px] border-slate-300 focus:border-blue-500"
                                     />
                                   </div>
 
-                                  <div className="flex gap-2">
+                                  {/* Action Buttons */}
+                                  <div className="flex gap-3 pt-2 border-t">
                                     <Button
-                                      className="flex-1 bg-green-600 hover:bg-green-700"
+                                      className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg transition-all"
                                       onClick={() => handleApprove(selectedApplication.id)}
                                     >
                                       <CheckCircle className="h-4 w-4 mr-2" />
-                                      Approve
+                                      Approve Application
                                     </Button>
                                     <Button
-                                      className="flex-1 bg-red-600 hover:bg-red-700"
+                                      className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-md hover:shadow-lg transition-all"
                                       onClick={() => handleReject(selectedApplication.id)}
                                     >
                                       <XCircle className="h-4 w-4 mr-2" />
-                                      Reject
+                                      Reject Application
                                     </Button>
                                   </div>
                                 </div>
@@ -622,6 +763,7 @@ export default function AdminDashboard() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -802,11 +944,12 @@ export default function AdminDashboard() {
         </TabsContent>
         */}
 
-{/* Analytics Tab */}
+        {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-6">
           <AnalyticsSection />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   )
 }

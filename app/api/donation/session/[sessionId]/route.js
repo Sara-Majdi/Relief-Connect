@@ -59,8 +59,43 @@ export async function GET(request, { params }) {
     // Generate receipt number
     const receiptNumber = `RC-${new Date().getFullYear()}-${sessionId.slice(-8).toUpperCase()}`
 
-    // Get donor information - prefer metadata, fallback to current session
+    // Get supabase client for database queries
     const supabase = await createClient()
+
+    // Fetch NGO registration details for the receipt
+    let ngoDetails = null
+    try {
+      const { data: campaign } = await supabase
+        .from('campaigns')
+        .select('ngo_user_id')
+        .eq('id', campaignId)
+        .single()
+
+      if (campaign?.ngo_user_id) {
+        const { data: ngoReg } = await supabase
+          .from('ngo_registrations')
+          .select('org_name, registration_number, address, city, state, postal_code')
+          .eq('user_id', campaign.ngo_user_id)
+          .eq('status', 'approved')
+          .single()
+
+        if (ngoReg) {
+          ngoDetails = {
+            name: ngoReg.org_name,
+            registrationNumber: ngoReg.registration_number,
+            address: ngoReg.address,
+            city: ngoReg.city,
+            state: ngoReg.state,
+            postalCode: ngoReg.postal_code
+          }
+        }
+      }
+    } catch (ngoError) {
+      console.error('Error fetching NGO details:', ngoError)
+      // Continue without NGO details if fetch fails
+    }
+
+    // Get donor information - prefer metadata, fallback to current session
     let donorName = metadataDonorName || 'Anonymous Donor'
     let donorEmail = metadataDonorEmail || session.customer_email
     let currentUser = null
@@ -125,6 +160,7 @@ export async function GET(request, { params }) {
       campaignId,
       campaignTitle,
       ngoName,
+      ngoDetails, // Add NGO registration details for receipt
       amount: baseAmount,
       tipAmount,
       totalAmount,

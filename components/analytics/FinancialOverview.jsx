@@ -174,7 +174,7 @@ export default function FinancialOverview({ dateRange }) {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          title="Total Revenue"
+          title="Collection Trend"
           value={(data.summary?.totalRevenue || 0).toFixed(2)}
           prefix="RM "
           subtitle={`${data.summary?.donationCount || 0} donations`}

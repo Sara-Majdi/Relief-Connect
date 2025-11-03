@@ -173,19 +173,26 @@ export default function DonationSuccessPage() {
         <CardContent>
           <PDFDownloadLink
             document={
-              <ReceiptDocument 
-                donor={{ 
-                  name: donationData.donorName || 'Anonymous Donor', 
-                  email: donationData.donorEmail 
-                }} 
+              <ReceiptDocument
+                donor={{
+                  name: donationData.donorName || 'Anonymous Donor',
+                  email: donationData.donorEmail
+                }}
                 donation={{
                   id: donationData.donationId,
                   date: new Date().toISOString().slice(0, 10),
                   amount: donationData.amount,
                   cause: donationData.campaignTitle,
                   receipt: donationData.receiptNumber
-                }} 
-                organization={{ name: donationData.ngoName }} 
+                }}
+                organization={donationData.ngoDetails || {
+                  name: donationData.ngoName,
+                  registrationNumber: 'N/A',
+                  address: 'Address not available',
+                  city: '',
+                  state: '',
+                  postalCode: ''
+                }}
               />
             }
             fileName={`receipt-${donationData.receiptNumber}.pdf`}

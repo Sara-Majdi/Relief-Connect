@@ -50,7 +50,8 @@ export default async function DonorProfilePage() {
         campaign_id,
         campaigns!donations_campaign_id_fkey (
           title,
-          ngo
+          ngo,
+          ngo_user_id
         )
       `)
       .eq('donor_id', session.data.user.id)
@@ -60,13 +61,44 @@ export default async function DonorProfilePage() {
       console.error('Error fetching donations:', donationError)
       // If table doesn't exist, use empty data
     } else if (donationData) {
+      // Fetch NGO details for all campaigns
+      const ngoUserIds = [...new Set(donationData.map(d => d.campaigns?.ngo_user_id).filter(Boolean))]
+      const { data: ngoDetails } = await supabase
+        .from('ngo_registrations')
+        .select('user_id, org_name, registration_number, address, city, state, postal_code')
+        .in('user_id', ngoUserIds)
+        .eq('status', 'approved')
+
+      // Create a map of ngo_user_id to ngo details
+      const ngoMap = {}
+      if (ngoDetails) {
+        ngoDetails.forEach(ngo => {
+          ngoMap[ngo.user_id] = {
+            name: ngo.org_name,
+            registrationNumber: ngo.registration_number,
+            address: ngo.address,
+            city: ngo.city,
+            state: ngo.state,
+            postalCode: ngo.postal_code
+          }
+        })
+      }
+
       donations = donationData.map(donation => ({
         id: donation.id,
         date: new Date(donation.created_at).toLocaleDateString('en-US'),
         amount: donation.amount,
         cause: donation.campaigns?.title || 'Unknown Campaign',
         status: donation.status,
-        receipt: donation.receipt_number
+        receipt: donation.receipt_number,
+        ngoDetails: ngoMap[donation.campaigns?.ngo_user_id] || {
+          name: donation.campaigns?.ngo || 'Unknown Organization',
+          registrationNumber: 'N/A',
+          address: 'Address not available',
+          city: '',
+          state: '',
+          postalCode: ''
+        }
       }))
 
       totalDonated = donationData.reduce((sum, d) => sum + (d.amount || 0), 0)
