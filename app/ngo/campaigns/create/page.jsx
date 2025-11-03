@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import ItemAllocationForm from "@/components/campaign/ItemAllocationForm"
+import MediaUploader from "@/components/campaign/MediaUploader"
 
 export default function CreateCampaignPage() {
   const supabase = createClient();
@@ -72,10 +73,13 @@ export default function CreateCampaignPage() {
     goal: "",
     beneficiaries: "",
     
-    // Media
+    // Media (Legacy - keep for backwards compatibility)
     image: null,
     imagePreview: null,
-    
+
+    // New Media Array for multiple files
+    media: [],
+
     // Financial Breakdown
     financialBreakdown: [
       { category: "Emergency Supplies", allocated: "", spent: "0" },
@@ -301,19 +305,85 @@ export default function CreateCampaignPage() {
     setSubmitting(true)
     try {
 
+      // Upload multiple media files to bucket
+      const uploadedMedia = []
+      let primaryImageUrl = null
 
-      // Upload image to bucket (optional - continue if upload fails)
-      let imageUrl = null 
-      if (formData.image) {
+      console.log('formData.media:', formData.media)
+      console.log('formData.media length:', formData.media?.length)
+
+      if (formData.media && formData.media.length > 0) {
+        console.log(`Processing ${formData.media.length} media files...`)
+        for (let i = 0; i < formData.media.length; i++) {
+          const mediaItem = formData.media[i]
+          console.log(`Media item ${i}:`, {
+            hasFile: !!mediaItem.file,
+            type: mediaItem.type,
+            name: mediaItem.name,
+            isPrimary: mediaItem.isPrimary
+          })
+          if (!mediaItem.file) {
+            console.warn(`Skipping media ${i} - no file property`)
+            continue
+          }
+
+          try {
+            const fileExt = mediaItem.file.name.split('.').pop()
+            const timestamp = Date.now()
+            const fileName = `${timestamp}_${i}.${fileExt}`
+
+            console.log(`Uploading media ${i + 1}/${formData.media.length}:`, fileName)
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('campaign-images')
+              .upload(fileName, mediaItem.file, {
+                cacheControl: '3600',
+                upsert: false
+              })
+
+            if (uploadError) {
+              console.warn(`Media upload ${i + 1} failed:`, uploadError)
+              continue
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('campaign-images')
+              .getPublicUrl(fileName)
+
+            uploadedMedia.push({
+              media_url: publicUrl,
+              media_type: mediaItem.type,
+              file_name: mediaItem.file.name,
+              file_size: mediaItem.file.size,
+              mime_type: mediaItem.file.type,
+              display_order: mediaItem.displayOrder || i,
+              is_primary: mediaItem.isPrimary || i === 0
+            })
+
+            // Set primary image for backward compatibility
+            if (mediaItem.isPrimary || i === 0) {
+              primaryImageUrl = publicUrl
+            }
+
+            console.log(`Media ${i + 1} uploaded successfully:`, publicUrl)
+          } catch (uploadError) {
+            console.warn(`Error uploading media ${i + 1}:`, uploadError)
+          }
+        }
+      }
+
+      // Fallback to legacy single image upload if no new media
+      let imageUrl = primaryImageUrl
+      if (!imageUrl && formData.image) {
         try {
           const fileExt = formData.image.name.split('.').pop() // get file extension
           const fileName = `${Date.now()}.${fileExt}` // create unique file name using timestamp
-          console.log('Attempting to upload image:', fileName)
-          
+          console.log('Attempting to upload legacy image:', fileName)
+
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('campaign-images')
             .upload(fileName, formData.image)
-          
+
           if (uploadError) {
             console.warn('Image upload failed, continuing without image:', uploadError)
             imageUrl = null
@@ -372,6 +442,30 @@ export default function CreateCampaignPage() {
       if (insertError) {
         console.error('Campaign insertion error:', insertError)
         throw insertError
+      }
+
+      // Insert campaign media into campaign_media table
+      if (uploadedMedia.length > 0) {
+        const mediaRecords = uploadedMedia.map(media => ({
+          campaign_id: data.id,
+          ...media
+        }))
+
+        console.log('Attempting to insert media records:', mediaRecords)
+
+        const { data: insertedMedia, error: mediaError } = await supabase
+          .from('campaign_media')
+          .insert(mediaRecords)
+          .select()
+
+        if (mediaError) {
+          console.error('Failed to insert campaign media:', mediaError)
+          // Continue anyway - media upload is not critical
+        } else {
+          console.log(`Successfully inserted ${uploadedMedia.length} media files:`, insertedMedia)
+        }
+      } else {
+        console.log('No media to insert - uploadedMedia array is empty')
       }
 
       // Create fundraising items if any
@@ -573,7 +667,7 @@ export default function CreateCampaignPage() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Johor">Johor</SelectItem>
                       <SelectItem value="Kedah">Kedah</SelectItem>
                       <SelectItem value="Kelantan">Kelantan</SelectItem>
@@ -679,26 +773,11 @@ export default function CreateCampaignPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="image">Campaign Image</Label>
-                <div className="space-y-4">
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                  {formData.imagePreview && (
-                    <div className="relative w-full h-48">
-                      <img
-                        src={formData.imagePreview}
-                        alt="Campaign preview"
-                        className="w-full h-full object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <MediaUploader
+                media={formData.media}
+                onChange={(media) => handleInputChange('media', media)}
+                maxFiles={10}
+              />
             </CardContent>
           </Card>
         </TabsContent>

@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package, Loader2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import MediaUploader from "@/components/campaign/MediaUploader"
 
 export default function EditCampaignPage({ params }) {
   const router = useRouter()
@@ -39,14 +40,20 @@ export default function EditCampaignPage({ params }) {
     goal: "",
     beneficiaries: "",
     
-    // Media
+    // Media (Legacy)
     image: null,
     imagePreview: null,
     existingImage: null,
 
+    // New Media Array
+    media: [],
+    existingMedia: [],
+
     // Financial Breakdown
     financialBreakdown: []
   })
+
+  const [mediaToDelete, setMediaToDelete] = useState([])
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -68,6 +75,15 @@ export default function EditCampaignPage({ params }) {
         if (error) throw error
 
         if (data) {
+          // Fetch existing media
+          const { data: mediaData, error: mediaError } = await supabase
+            .from('campaign_media')
+            .select('*')
+            .eq('campaign_id', params.id)
+            .order('display_order', { ascending: true })
+
+          const existingMedia = mediaData || []
+
           setFormData({
             title: data.title || "",
             description: data.description || "",
@@ -81,6 +97,18 @@ export default function EditCampaignPage({ params }) {
             goal: data.goal?.toString() || "",
             beneficiaries: data.beneficiaries?.toString() || "",
             existingImage: data.image_url,
+            existingMedia: existingMedia,
+            media: existingMedia.map(m => ({
+              id: m.id,
+              preview: m.media_url,
+              media_url: m.media_url,
+              type: m.media_type,
+              name: m.file_name,
+              size: m.file_size,
+              isPrimary: m.is_primary,
+              displayOrder: m.display_order,
+              existing: true
+            })),
             financialBreakdown: data.financial_breakdown || [
               { category: "Emergency Supplies", allocated: "", spent: "0" },
               { category: "Transportation", allocated: "", spent: "0" },
@@ -171,7 +199,7 @@ export default function EditCampaignPage({ params }) {
 
   const handleSubmit = async () => {
     setError("")
-    
+
     if (!validateForm()) {
       return
     }
@@ -180,21 +208,118 @@ export default function EditCampaignPage({ params }) {
     try {
       const supabase = createClient()
 
-      // Upload new image if provided
-      let imageUrl = formData.existingImage
+      // Handle media updates
+      const uploadedMedia = []
+      let primaryImageUrl = formData.existingImage
+
+      // Track deleted media for removal from storage and database
+      const existingMediaIds = formData.existingMedia.map(m => m.id)
+      const currentMediaIds = formData.media.filter(m => m.existing && m.id).map(m => m.id)
+      const deletedMediaIds = existingMediaIds.filter(id => !currentMediaIds.includes(id))
+
+      // Delete removed media from database and storage
+      if (deletedMediaIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('campaign_media')
+          .delete()
+          .in('id', deletedMediaIds)
+
+        if (deleteError) {
+          console.error('Error deleting media:', deleteError)
+        }
+      }
+
+      // Upload new media files
+      const newMedia = formData.media.filter(m => !m.existing && m.file)
+      for (let i = 0; i < newMedia.length; i++) {
+        const mediaItem = newMedia[i]
+
+        try {
+          const fileExt = mediaItem.file.name.split('.').pop()
+          const timestamp = Date.now()
+          const fileName = `${timestamp}_${i}.${fileExt}`
+
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('campaign-images')
+            .upload(fileName, mediaItem.file, {
+              cacheControl: '3600',
+              upsert: false
+            })
+
+          if (uploadError) {
+            console.warn(`Media upload ${i + 1} failed:`, uploadError)
+            continue
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('campaign-images')
+            .getPublicUrl(fileName)
+
+          uploadedMedia.push({
+            campaign_id: params.id,
+            media_url: publicUrl,
+            media_type: mediaItem.type,
+            file_name: mediaItem.file.name,
+            file_size: mediaItem.file.size,
+            mime_type: mediaItem.file.type,
+            display_order: mediaItem.displayOrder || i,
+            is_primary: mediaItem.isPrimary || false
+          })
+
+          if (mediaItem.isPrimary) {
+            primaryImageUrl = publicUrl
+          }
+        } catch (uploadError) {
+          console.warn(`Error uploading media ${i + 1}:`, uploadError)
+        }
+      }
+
+      // Insert new media into database
+      if (uploadedMedia.length > 0) {
+        const { error: mediaError } = await supabase
+          .from('campaign_media')
+          .insert(uploadedMedia)
+
+        if (mediaError) {
+          console.error('Failed to insert campaign media:', mediaError)
+        }
+      }
+
+      // Update existing media (for primary flag and order changes)
+      const existingMediaToUpdate = formData.media.filter(m => m.existing && m.id)
+      for (const mediaItem of existingMediaToUpdate) {
+        const { error: updateError } = await supabase
+          .from('campaign_media')
+          .update({
+            is_primary: mediaItem.isPrimary,
+            display_order: mediaItem.displayOrder
+          })
+          .eq('id', mediaItem.id)
+
+        if (updateError) {
+          console.error('Error updating media:', updateError)
+        }
+
+        if (mediaItem.isPrimary) {
+          primaryImageUrl = mediaItem.media_url
+        }
+      }
+
+      // Fallback to legacy single image upload if provided
+      let imageUrl = primaryImageUrl
       if (formData.image) {
         const fileExt = formData.image.name.split('.').pop()
         const fileName = `${Date.now()}.${fileExt}`
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('campaign-images')
           .upload(fileName, formData.image)
-        
+
         if (uploadError) throw uploadError
-        
+
         const { data: { publicUrl } } = supabase.storage
           .from('campaign-images')
           .getPublicUrl(fileName)
-        
+
         imageUrl = publicUrl
       }
 
@@ -490,37 +615,11 @@ export default function EditCampaignPage({ params }) {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="image">Campaign Image</Label>
-                <div className="space-y-4">
-                  {formData.existingImage && !formData.imagePreview && (
-                    <div className="relative w-full h-48">
-                      <Image
-                        src={formData.existingImage}
-                        alt="Current campaign image"
-                        className="w-full h-full object-cover rounded-lg border"
-                        unoptimized
-      
-                      />
-                    </div>
-                  )}
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                  {formData.imagePreview && (
-                    <div className="relative w-full h-48">
-                      <img
-                        src={formData.imagePreview}
-                        alt="New campaign preview"
-                        className="w-full h-full object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <MediaUploader
+                media={formData.media}
+                onChange={(media) => handleInputChange('media', media)}
+                maxFiles={10}
+              />
             </CardContent>
           </Card>
         </TabsContent>
