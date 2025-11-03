@@ -95,6 +95,36 @@ export async function GET(request) {
       ? campaignDurations.reduce((sum, d) => sum + d, 0) / campaignDurations.length
       : 0;
 
+    // Fetch campaign items to calculate top needed items
+    const { data: items, error: itemsError } = await supabase
+      .from('campaign_items')
+      .select('*');
+
+    // Calculate top needed items (items with lowest fulfillment rate)
+    const topNeededItems = items && !itemsError
+      ? Object.values(
+          items.reduce((acc, item) => {
+            const name = item.name || 'Unknown Item';
+            if (!acc[name]) {
+              acc[name] = {
+                item: name,
+                needed: 0,
+                received: 0
+              };
+            }
+            acc[name].needed += parseFloat(item.target_amount || 0);
+            acc[name].received += parseFloat(item.current_amount || 0);
+            return acc;
+          }, {})
+        )
+        .map(item => ({
+          ...item,
+          fulfillmentRate: item.needed > 0 ? (item.received / item.needed) * 100 : 0
+        }))
+        .sort((a, b) => a.fulfillmentRate - b.fulfillmentRate)
+        .slice(0, 10)
+      : [];
+
     return NextResponse.json({
       summary: {
         totalCampaigns: campaigns.length,
@@ -109,7 +139,8 @@ export async function GET(request) {
       statusBreakdown: {
         active: activeCampaigns,
         completed: completedCampaigns
-      }
+      },
+      topNeededItems
     });
 
   } catch (error) {

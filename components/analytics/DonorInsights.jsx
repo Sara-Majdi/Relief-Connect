@@ -45,27 +45,39 @@ export default function DonorInsights({ dateRange }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading donor insights...</p>
+        </div>
       </div>
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center text-gray-500">
+          <p className="font-semibold mb-2">No donor data available</p>
+          <p className="text-sm">Donor insights data could not be loaded. Please check your connection and try again.</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Prepare chart data
+  // Prepare chart data with safety checks
   const donorGrowthData = {
-    labels: data.donorGrowth.map(d => new Date(d.date).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })),
+    labels: (data.donorGrowth || []).map(d => new Date(d.date).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })),
     datasets: [
       {
         label: 'New Donors',
-        data: data.donorGrowth.map(d => d.newDonors),
+        data: (data.donorGrowth || []).map(d => d.newDonors || 0),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.3)',
         fill: true,
       },
       {
         label: 'Cumulative Donors',
-        data: data.donorGrowth.map(d => d.cumulativeDonors),
+        data: (data.donorGrowth || []).map(d => d.cumulativeDonors || 0),
         borderColor: 'rgb(16, 185, 129)',
         backgroundColor: 'rgba(16, 185, 129, 0.3)',
         fill: true,
@@ -77,11 +89,11 @@ export default function DonorInsights({ dateRange }) {
     labels: ['Platinum (>RM 5K)', 'Gold (RM 2-5K)', 'Silver (RM 1-2K)', 'Bronze (RM 0.5-1K)', 'Supporter (<RM 0.5K)'],
     datasets: [{
       data: [
-        data.segments.platinum,
-        data.segments.gold,
-        data.segments.silver,
-        data.segments.bronze,
-        data.segments.supporter
+        data.segments?.platinum || 0,
+        data.segments?.gold || 0,
+        data.segments?.silver || 0,
+        data.segments?.bronze || 0,
+        data.segments?.supporter || 0
       ],
       backgroundColor: [
         'rgba(147, 197, 253, 0.8)',
