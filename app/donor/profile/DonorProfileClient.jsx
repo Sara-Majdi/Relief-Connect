@@ -104,7 +104,7 @@ const DonorProfileClient = ({ donorData }) => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Total Donated</span>
-                      <span className="font-semibold text-green-600">${donorData.totalDonated.toLocaleString()}</span>
+                      <span className="font-semibold text-green-600">RM {donorData.totalDonated.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Total Donations</span>
@@ -116,7 +116,7 @@ const DonorProfileClient = ({ donorData }) => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Average Donation</span>
-                      <span className="font-semibold">${Math.round(donorData.totalDonated / donorData.totalDonations)}</span>
+                      <span className="font-semibold">RM {Math.round(donorData.totalDonated / donorData.totalDonations)}</span>
                     </div>
                   </div>
                 </div>
@@ -173,7 +173,7 @@ const DonorProfileClient = ({ donorData }) => {
                                     <p className="text-sm text-gray-600">{donation.date}</p>
                                   </div>
                                 </div>
-                                <span className="font-semibold text-green-600">${donation.amount}</span>
+                                <span className="font-semibold text-green-600">RM {donation.amount}</span>
                               </div>
                             ))}
                           </div>
@@ -186,7 +186,7 @@ const DonorProfileClient = ({ donorData }) => {
                         <div className="flex items-center justify-between mb-6">
                           <h3 className="text-lg font-semibold text-gray-900">Donation History</h3>
                           <PDFDownloadLink
-                            document={<ReceiptDocument donor={{ name: donorData.name, email: donorData.email }} donation={{ id: 'report', date: new Date().toISOString().slice(0,10), amount: donorData.totalDonated, cause: 'All Donations', receipt: `RC-REPORT-${new Date().getFullYear()}` }} organization={{ name: 'Relief Connect' }} />}
+                            document={<ReceiptDocument donor={{ name: donorData.name, email: donorData.email }} donation={{ id: 'report', date: new Date().toISOString().slice(0,10), amount: donorData.totalDonated, cause: 'Annual Donation Summary', receipt: `RC-REPORT-${new Date().getFullYear()}` }} organization={{ name: 'Multiple Organizations', registrationNumber: 'Summary Report', address: 'See individual receipts for details', city: '', state: '', postalCode: '' }} />}
                             fileName={`donation-report-${new Date().getFullYear()}.pdf`}
                           >
                             {({ loading }) => (
@@ -213,10 +213,10 @@ const DonorProfileClient = ({ donorData }) => {
                                 <tr key={donation.id} className="hover:bg-gray-50">
                                   <td className="py-4 px-4 text-gray-900">{donation.date}</td>
                                   <td className="py-4 px-4 text-gray-900">{donation.cause}</td>
-                                  <td className="py-4 px-4 font-semibold text-green-600">${donation.amount}</td>
+                                  <td className="py-4 px-4 font-semibold text-green-600">RM {donation.amount.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                   <td className="py-4 px-4">
                                     <PDFDownloadLink
-                                      document={<ReceiptDocument donor={{ name: donorData.name, email: donorData.email }} donation={donation} organization={{ name: 'Relief Connect' }} />}
+                                      document={<ReceiptDocument donor={{ name: donorData.name, email: donorData.email }} donation={donation} organization={donation.ngoDetails || { name: 'Unknown Organization', registrationNumber: 'N/A', address: 'Address not available', city: '', state: '', postalCode: '' }} />}
                                       fileName={`${donation.receipt || `RC-${donation.id}`}.pdf`}
                                     >
                                       {({ loading }) => (
