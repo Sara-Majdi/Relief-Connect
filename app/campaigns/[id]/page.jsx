@@ -28,6 +28,7 @@ import { supabase } from "@/lib/supabaseClient"
 import ItemProgressCards from "@/components/campaign/ItemProgressCards"
 import AllocationBreakdown from "@/components/campaign/AllocationBreakdown"
 import ItemDonationModal from "@/components/donation/ItemDonationModal"
+import MediaCarousel from "@/components/campaign/MediaCarousel"
 import { } from 'lucide-react';
 
 export default function CampaignDetailPage({ params }) {
@@ -38,6 +39,7 @@ export default function CampaignDetailPage({ params }) {
   const [fundraisingItems, setFundraisingItems] = useState([])
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
+  const [campaignMedia, setCampaignMedia] = useState([])
 
   // Helper function to format dates
   const formatDate = (dateString) => {
@@ -96,6 +98,30 @@ export default function CampaignDetailPage({ params }) {
             createdAt: data.created_at || data.createdAt,
           }
           setCampaign(mappedCampaign)
+        }
+
+        // Fetch campaign media
+        try {
+          console.log('Fetching campaign media for campaign ID:', params.id)
+          const { data: mediaData, error: mediaError } = await supabase
+            .from('campaign_media')
+            .select('*')
+            .eq('campaign_id', params.id)
+            .order('display_order', { ascending: true })
+
+          if (mediaError) {
+            console.error('Error fetching campaign media:', mediaError)
+          } else {
+            console.log('Campaign media fetched:', mediaData)
+            if (mediaData && mediaData.length > 0) {
+              setCampaignMedia(mediaData)
+              console.log(`Set ${mediaData.length} media files to state`)
+            } else {
+              console.log('No media files found for this campaign')
+            }
+          }
+        } catch (mediaError) {
+          console.error('Exception fetching campaign media:', mediaError)
         }
 
         // Fetch fundraising items via API
@@ -274,26 +300,45 @@ export default function CampaignDetailPage({ params }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Hero Image */}
-            <div className="relative mb-6 rounded-xl overflow-hidden shadow-2xl group">
-              <Image
-                src={campaign.image || "/placeholder.svg"}
-                alt={campaign.title}
-                width={800}
-                height={400}
-                className="w-full h-72 md:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
-                unoptimized
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              {campaign.urgency === "urgent" && (
-                <Badge className="absolute top-4 right-4 bg-blue-600 shadow-lg animate-pulse text-base px-4 py-2">
-                  <Clock className="mr-2 h-4 w-4" /> Urgent
-                </Badge>
-              )}
-              {campaign.urgency === "critical" && (
-                <Badge className="absolute top-4 right-4 bg-red-600 shadow-lg animate-pulse text-base px-4 py-2">
-                  <AlertTriangle className="mr-2 h-4 w-4" /> Critical
-                </Badge>
+            {/* Hero Media Carousel */}
+            <div className="relative mb-6">
+              {campaignMedia.length > 0 ? (
+                <div className="relative">
+                  <MediaCarousel media={campaignMedia} className="w-full" />
+                  {campaign.urgency === "urgent" && (
+                    <Badge className="absolute top-4 right-4 bg-blue-600 shadow-lg animate-pulse text-base px-4 py-2 z-10">
+                      <Clock className="mr-2 h-4 w-4" /> Urgent
+                    </Badge>
+                  )}
+                  {campaign.urgency === "critical" && (
+                    <Badge className="absolute top-4 right-4 bg-red-600 shadow-lg animate-pulse text-base px-4 py-2 z-10">
+                      <AlertTriangle className="mr-2 h-4 w-4" /> Critical
+                    </Badge>
+                  )}
+                </div>
+              ) : (
+                <div className="relative rounded-xl overflow-hidden shadow-2xl group">
+                  <Image
+                    src={campaign.image || "/placeholder.svg"}
+                    alt={campaign.title}
+                    width={800}
+                    height={400}
+                    className="w-full h-72 md:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
+                    quality={100}
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  {campaign.urgency === "urgent" && (
+                    <Badge className="absolute top-4 right-4 bg-blue-600 shadow-lg animate-pulse text-base px-4 py-2">
+                      <Clock className="mr-2 h-4 w-4" /> Urgent
+                    </Badge>
+                  )}
+                  {campaign.urgency === "critical" && (
+                    <Badge className="absolute top-4 right-4 bg-red-600 shadow-lg animate-pulse text-base px-4 py-2">
+                      <AlertTriangle className="mr-2 h-4 w-4" /> Critical
+                    </Badge>
+                  )}
+                </div>
               )}
             </div>
 
@@ -464,6 +509,15 @@ export default function CampaignDetailPage({ params }) {
                         <div className="flex-1">
                           <div className="text-xs text-gray-500 mb-0.5">Target Date</div>
                           <div className="font-medium text-gray-900">{formatDate(campaign.targetDate) || campaign.targetDate}</div>
+                        </div>
+                      </div>
+                    )}
+                    {campaign.createdAt && (
+                      <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                        <Calendar className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div className="text-xs text-gray-500 mb-0.5">Created On</div>
+                          <div className="font-medium text-gray-900">{formatDate(campaign.createdAt) || campaign.createdAt}</div>
                         </div>
                       </div>
                     )}
