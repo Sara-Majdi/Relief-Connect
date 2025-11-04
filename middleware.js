@@ -36,15 +36,34 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Protected admin routes
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+
+  // If it's an admin route, check admin authentication
+  if (isAdminRoute) {
+    // Check for admin session cookie
+    const cookieStore = await cookies()
+    const adminSessionCookie = cookieStore.get('admin-session')
+
+    if (!adminSessionCookie) {
+      // Redirect to admin login if no session
+      const redirectUrl = new URL('/auth/admin', request.url)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // If admin has session, allow access (the check-admin-session API will validate it)
+    return supabaseResponse
+  }
+
   // Define public NGO routes that don't require authentication
   const publicNGORoutes = ['/ngo/register']
-  const isPublicNGORoute = publicNGORoutes.some(route => 
+  const isPublicNGORoute = publicNGORoutes.some(route =>
     request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(route + '/')
   )
 
   // Protected NGO routes
   const isNGORoute = request.nextUrl.pathname.startsWith('/ngo')
-    
+
   // If it's an NGO route but NOT a public one, check authentication
   if (isNGORoute && !isPublicNGORoute) {
     // Check for NGO session cookie first

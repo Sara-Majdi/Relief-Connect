@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { Separator } from "@/components/ui/separator"
@@ -17,13 +18,15 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Lock, XCircle, UserPlus } from "lucide-react"
+import { Lock, XCircle, UserPlus, Loader2 } from "lucide-react"
 
 export default function AdminDashboardLayout({ children }) {
-  const [isPasscodeDialogOpen, setIsPasscodeDialogOpen] = useState(false)
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [isCreateAdminDialogOpen, setIsCreateAdminDialogOpen] = useState(false)
-  const [passcode, setPasscode] = useState("")
-  const [passcodeError, setPasscodeError] = useState("")
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false)
+  const [createAdminError, setCreateAdminError] = useState("")
   const [newAdmin, setNewAdmin] = useState({
     name: "",
     email: "",
@@ -31,28 +34,74 @@ export default function AdminDashboardLayout({ children }) {
     role: "admin",
   })
 
-  const SUPER_ADMIN_PASSCODE = "RELIEF2024"
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/check-admin-session")
+        if (!response.ok) {
+          router.push("/auth/admin")
+        } else {
+          setIsAuthenticated(true)
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error)
+        router.push("/auth/admin")
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const handlePasscodeSubmit = () => {
-    if (passcode === SUPER_ADMIN_PASSCODE) {
-      setIsPasscodeDialogOpen(false)
-      setIsCreateAdminDialogOpen(true)
-      setPasscode("")
-      setPasscodeError("")
-    } else {
-      setPasscodeError("Invalid passcode. Please try again.")
+    checkAuth()
+  }, [router])
+
+  const handleCreateAdmin = async () => {
+    setIsCreatingAdmin(true)
+    setCreateAdminError("")
+
+    try {
+      const response = await fetch("/api/admin/create-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newAdmin),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create admin")
+      }
+
+      setIsCreateAdminDialogOpen(false)
+      setNewAdmin({ name: "", email: "", password: "", role: "admin" })
+      // Show success message (you can add a toast notification here)
+      alert("Admin account created successfully!")
+    } catch (error) {
+      setCreateAdminError(error.message)
+    } finally {
+      setIsCreatingAdmin(false)
     }
   }
 
-  const handleCreateAdmin = () => {
-    console.log("Creating new admin:", newAdmin)
-    setIsCreateAdminDialogOpen(false)
-    setNewAdmin({ name: "", email: "", password: "", role: "admin" })
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  // Only render the admin layout if authenticated
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
     <SidebarProvider>
-      <AdminSidebar onAddAdminClick={() => setIsPasscodeDialogOpen(true)} />
+      <AdminSidebar onAddAdminClick={() => setIsCreateAdminDialogOpen(true)} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -73,62 +122,6 @@ export default function AdminDashboardLayout({ children }) {
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
       </SidebarInset>
-
-      {/* Passcode Dialog */}
-      <Dialog open={isPasscodeDialogOpen} onOpenChange={setIsPasscodeDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-blue-600" />
-              Super Admin Verification
-            </DialogTitle>
-            <DialogDescription>Enter the super admin passcode to create a new admin account.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="passcode">Passcode</Label>
-              <Input
-                id="passcode"
-                type="password"
-                placeholder="Enter super admin passcode"
-                value={passcode}
-                onChange={(e) => {
-                  setPasscode(e.target.value)
-                  setPasscodeError("")
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handlePasscodeSubmit()
-                  }
-                }}
-                className="mt-2"
-              />
-              {passcodeError && (
-                <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                  <XCircle className="h-4 w-4" />
-                  {passcodeError}
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1 bg-transparent"
-                onClick={() => {
-                  setIsPasscodeDialogOpen(false)
-                  setPasscode("")
-                  setPasscodeError("")
-                }}
-              >
-                Cancel
-              </Button>
-              <Button className="flex-1" onClick={handlePasscodeSubmit}>
-                Verify
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Create Admin Dialog */}
       <Dialog open={isCreateAdminDialogOpen} onOpenChange={setIsCreateAdminDialogOpen}>
@@ -185,9 +178,24 @@ export default function AdminDashboardLayout({ children }) {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleCreateAdmin} className="w-full">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Create Admin Account
+            {createAdminError && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <XCircle className="h-4 w-4" />
+                {createAdminError}
+              </p>
+            )}
+            <Button onClick={handleCreateAdmin} className="w-full" disabled={isCreatingAdmin}>
+              {isCreatingAdmin ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create Admin Account
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>

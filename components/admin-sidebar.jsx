@@ -1,5 +1,5 @@
 "use client"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Building2, Users, LayoutDashboard, Settings, Shield, FileText, Bell, LogOut, ChevronRight } from "lucide-react"
 
@@ -114,6 +114,19 @@ const data = {
 
 export function AdminSidebar({ onAddAdminClick, ...props }) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/admin-logout", {
+        method: "POST",
+      })
+      router.push("/auth/admin")
+      router.refresh()
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -226,7 +239,7 @@ export function AdminSidebar({ onAddAdminClick, ...props }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
