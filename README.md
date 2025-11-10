@@ -4,7 +4,7 @@ Hi there! 👋
 This is my **Final Year Project (FYP)** called **ReliefConnect** 💡✨  
 
 🚀 A platform to connect NGOs and people who want to help during disasters.  
-💖 Built with Next.js, Tailwind, and a sprinkle of ShadCN magic.  
+💖 Built with Next.js, Tailwind magic.  
 
 ---
 
