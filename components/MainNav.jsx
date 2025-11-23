@@ -225,7 +225,7 @@ export function MainNav() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href="/ngo/campaigns/create">
+                          <Link href="/ngo/campaigns/create/payment">
                             <Plus className="mr-2 h-4 w-4" />
                             Create Campaign
                           </Link>
@@ -305,7 +305,7 @@ export function MainNav() {
                               <Link href="/ngo/campaigns" className="text-lg font-medium block mb-4">
                                 My Campaigns
                               </Link>
-                              <Link href="/ngo/campaigns/create" className="text-lg font-medium block mb-4">
+                              <Link href="/ngo/campaigns/create/payment" className="text-lg font-medium block mb-4">
                                 Create Campaign
                               </Link>
                               <Link href="/ngo/profile" className="text-lg font-medium block mb-4">

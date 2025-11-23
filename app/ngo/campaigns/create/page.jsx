@@ -27,18 +27,27 @@ export default function CreateCampaignPage() {
   const [loading, setLoading] = useState(true)
   const [ngoInfo, setNgoInfo] = useState(null)
 
-  // Check NGO authentication on mount
+  // Check NGO authentication and payment verification on mount
   useEffect(() => {
     const checkNGOSession = async () => {
       try {
+        // First, verify payment was completed
+        const paymentVerified = sessionStorage.getItem('campaign_payment_verified')
+        if (!paymentVerified) {
+          console.log('No payment verification found, redirecting to payment page')
+          router.push('/ngo/campaigns/create/payment')
+          return
+        }
+
+        // Check NGO authentication
         const response = await fetch('/api/auth/check-session')
         const data = await response.json()
-        
+
         if (!data.isAuthenticated || !data.user) {
           router.push('/auth/ngo')
           return
         }
-        
+
         // Save the NGO info in state
         setFormData((prev) => ({
           ...prev,
@@ -505,12 +514,15 @@ export default function CreateCampaignPage() {
         }
       }
 
+      // Clear payment verification token
+      sessionStorage.removeItem('campaign_payment_verified')
+
       // Redirect to campaign detail page
       router.push(`/campaigns/${data.id}`)
-    } 
+    }
       catch (e) {
       setError(e.message || "Failed to create campaign")
-      } 
+      }
       finally {
       setSubmitting(false)
       }

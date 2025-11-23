@@ -230,7 +230,7 @@ export default function NGODashboard() {
           </p>
         </div>
         <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all text-white">
-          <Link href="/ngo/campaigns/create">
+          <Link href="/ngo/campaigns/create/payment">
             <Plus className="h-4 w-4 mr-2" />
             Create Campaign
           </Link>
@@ -311,7 +311,7 @@ export default function NGODashboard() {
                 <div className="text-center py-8 text-gray-500">
                   <p>No campaigns yet. Create your first campaign to get started!</p>
                   <Button className="mt-4" asChild>
-                    <Link href="/ngo/campaigns/create">
+                    <Link href="/ngo/campaigns/create/payment">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Campaign
                     </Link>
@@ -350,7 +350,7 @@ export default function NGODashboard() {
               <CardContent className="py-8 text-center">
                 <p className="text-gray-500 mb-4">No campaigns yet. Create your first campaign to get started!</p>
                 <Button asChild>
-                  <Link href="/ngo/campaigns/create">
+                  <Link href="/ngo/campaigns/create/payment">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Campaign
                   </Link>
