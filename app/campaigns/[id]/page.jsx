@@ -29,6 +29,7 @@ import ItemProgressCards from "@/components/campaign/ItemProgressCards"
 import AllocationBreakdown from "@/components/campaign/AllocationBreakdown"
 import ItemDonationModal from "@/components/donation/ItemDonationModal"
 import MediaCarousel from "@/components/campaign/MediaCarousel"
+import ShareCampaignModal from "@/components/ShareCampaignModal"
 import { } from 'lucide-react';
 
 export default function CampaignDetailPage({ params }) {
@@ -40,6 +41,7 @@ export default function CampaignDetailPage({ params }) {
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
   const [campaignMedia, setCampaignMedia] = useState([])
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
 
   // Helper function to format dates
   const formatDate = (dateString) => {
@@ -476,7 +478,11 @@ export default function CampaignDetailPage({ params }) {
 
                   {/* Share */}
                   <div className="pt-4 border-t">
-                    <Button variant="outline" className="w-full border-2 hover:bg-gray-50 transition-colors">
+                    <Button
+                      variant="outline"
+                      className="w-full border-2 hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsShareModalOpen(true)}
+                    >
                       <Share2 className="h-4 w-4 mr-2" />
                       Share Campaign
                     </Button>
@@ -897,6 +903,13 @@ export default function CampaignDetailPage({ params }) {
             window.location.href = url
           }
         }}
+      />
+
+      {/* Share Campaign Modal */}
+      <ShareCampaignModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        campaign={campaign}
       />
     </div>
   )
