@@ -131,7 +131,7 @@ export function MainNav() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
@@ -156,45 +156,9 @@ export function MainNav() {
                         </a>
                       </NavigationMenuLink>
                     </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <a
-                          href="/campaigns/flood"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Flood Relief</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Support communities affected by flooding
-                          </p>
-                        </a>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <a
-                          href="/campaigns/landslide"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Landslide Recovery</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Help communities rebuild after landslides
-                          </p>
-                        </a>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <a
-                          href="/campaigns/drought"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Drought Response</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Provide water and supplies to drought-affected areas
-                          </p>
-                        </a>
-                      </NavigationMenuLink>
-                    </li>
+                    
+                    
+                    
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>

@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress"
 import { Plus, Edit, Trash2, Eye, DollarSign, Package, Users, Clock, CheckCircle, AlertTriangle, BarChart3, Loader2, TrendingUp, MessageSquare, Calendar, Target } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function NGODashboard() {
   const router = useRouter()
@@ -86,9 +87,6 @@ export default function NGODashboard() {
         .select('*')
         .eq('ngo_user_id', ngoUserId)
         .order('updated_at', { ascending: false })
-
-      console.log('Filtered campaigns for NGO:', data)
-      console.log('Query error:', error)
 
       if (error) throw error
 
@@ -231,7 +229,7 @@ export default function NGODashboard() {
             Welcome, <span className="font-semibold text-gray-700">{ngoInfo?.org_name || 'Organization'}</span>
           </p>
         </div>
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all">
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all text-white">
           <Link href="/ngo/campaigns/create">
             <Plus className="h-4 w-4 mr-2" />
             Create Campaign
@@ -368,9 +366,19 @@ export default function NGODashboard() {
                   Math.max(0, Math.ceil((new Date(campaign.target_date) - new Date()) / (1000 * 60 * 60 * 24))) : 0
                 return (
                   <Card key={campaign.id} className="hover:shadow-xl transition-all duration-200 border-l-4 border-l-blue-500">
-                    {campaign.image_url && (
-                      <div className="h-40 overflow-hidden">
-                        <img src={campaign.image_url} alt={campaign.title} className="w-full h-full object-cover" />
+                    {campaign.image_url ? (
+                      <div className="relative h-40 overflow-hidden bg-gray-100">
+                        <Image
+                          src={campaign.image_url}
+                          alt={campaign.title}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <div className="text-gray-400 text-sm">No image available</div>
                       </div>
                     )}
                     <CardHeader className="pb-3">
@@ -600,7 +608,7 @@ export default function NGODashboard() {
 
       {/* Campaign Detail Sheet */}
       <Sheet open={isCampaignDetailOpen} onOpenChange={setIsCampaignDetailOpen}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-white p-4">
           {selectedCampaign && (
             <>
               <SheetHeader>
@@ -612,11 +620,13 @@ export default function NGODashboard() {
               <div className="space-y-6 py-6">
                 {/* Campaign Image */}
                 {selectedCampaign.image_url && (
-                  <div className="rounded-lg overflow-hidden">
-                    <img
+                  <div className="relative rounded-lg overflow-hidden h-64">
+                    <Image
                       src={selectedCampaign.image_url}
                       alt={selectedCampaign.title}
-                      className="w-full h-64 object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                   </div>
                 )}

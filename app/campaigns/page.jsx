@@ -147,7 +147,7 @@ export default function CampaignsPage() {
 
             <div className="container mx-auto w-full px-4 md:px-6 py-8 md:py-12">
                 {/* Stats Bar */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 -mt-20">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 -mt-20 max-w-4xl mx-auto">
                     <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/95 backdrop-blur">
                         <CardContent className="pt-6">
                             <div className="text-3xl font-bold text-blue-600 mb-1">{filteredCampaigns.length}</div>
@@ -226,15 +226,6 @@ export default function CampaignsPage() {
                                         <TabsTrigger value="all" className="flex-1 data-[state=active]:bg-white">
                                             All
                                         </TabsTrigger>
-                                        <TabsTrigger value="flood" className="flex-1 data-[state=active]:bg-blue-100">
-                                            Flood
-                                        </TabsTrigger>
-                                        <TabsTrigger value="landslide" className="flex-1 data-[state=active]:bg-orange-100">
-                                            Landslide
-                                        </TabsTrigger>
-                                        <TabsTrigger value="drought" className="flex-1 data-[state=active]:bg-yellow-100">
-                                            Drought
-                                        </TabsTrigger>
                                     </TabsList>
                                 </Tabs>
                             </div>
@@ -243,28 +234,28 @@ export default function CampaignsPage() {
                 </Card>
 
                     {/* Show no results message */}
-                {filteredCampaigns.length === 0 && (searchQuery || selectedDisasterType !== "all") && (
-                    <Card className="text-center py-12 shadow-md">
-                        <CardContent>
-                            <div className="text-gray-400 mb-2">
-                                <Search className="h-16 w-16 mx-auto mb-4" />
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">No campaigns found</h3>
-                            <p className="text-gray-500 mb-6">
-                                Try adjusting your search terms or filters to find what you're looking for.
-                            </p>
-                            <Button
-                                onClick={() => {
-                                    setSearchQuery("")
-                                    setSelectedDisasterType("all")
-                                }}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                            >
-                                Clear Filters
-                            </Button>
-                        </CardContent>
-                    </Card>
-                )}
+                    {filteredCampaigns.length === 0 && (searchQuery || selectedDisasterType !== "all") && (
+                        <Card className="text-center py-12 shadow-md">
+                            <CardContent>
+                                <div className="text-gray-400 mb-2">
+                                    <Search className="h-16 w-16 mx-auto mb-4" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">No campaigns found</h3>
+                                <p className="text-gray-500 mb-6">
+                                    Try adjusting your search terms or filters to find what you're looking for.
+                                </p>
+                                <Button
+                                    onClick={() => {
+                                        setSearchQuery("")
+                                        setSelectedDisasterType("all")
+                                    }}
+                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                >
+                                    Clear Filters
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredCampaigns.map((campaign) => (

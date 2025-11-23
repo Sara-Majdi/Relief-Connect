@@ -95,12 +95,47 @@ export default function ItemAllocationForm({ campaignGoal, items = [], onChange 
     setErrors(newErrors);
   };
 
-  // Image upload handler (placeholder - integrate with your image upload service)
+  // Image upload handler - uploads to Supabase storage
   const handleImageUpload = async (index, file) => {
-    // TODO: Implement Supabase storage upload
-    // For now, create a temporary URL
-    const tempUrl = URL.createObjectURL(file);
-    handleItemChange(index, 'image_url', tempUrl);
+    try {
+      // Create preview URL for immediate feedback
+      const tempUrl = URL.createObjectURL(file);
+      handleItemChange(index, 'image_url', tempUrl);
+
+      // Upload to Supabase storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('campaign-images')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Image upload failed:', uploadError);
+        alert('Failed to upload image. Please try again.');
+        // Revert to no image
+        handleItemChange(index, 'image_url', '');
+        return;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('campaign-images')
+        .getPublicUrl(fileName);
+
+      // Update with the real Supabase URL
+      handleItemChange(index, 'image_url', publicUrl);
+      console.log('Item image uploaded successfully:', publicUrl);
+
+      // Cleanup the blob URL
+      URL.revokeObjectURL(tempUrl);
+    } catch (error) {
+      console.error('Error uploading item image:', error);
+      alert('Failed to upload image. Please try again.');
+    }
   };
 
   // Validate form

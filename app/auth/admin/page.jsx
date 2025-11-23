@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
               <Shield className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold">Admin Portal</CardTitle>
+          <CardTitle className="text-3xl font-bold text-white">Admin Portal</CardTitle>
           <CardDescription className="text-slate-400">
             Sign in to access the admin dashboard
           </CardDescription>

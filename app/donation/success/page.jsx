@@ -102,7 +102,7 @@ export default function DonationSuccessPage() {
     <div className="container mx-auto max-w-2xl px-4 py-8">
       {/* Success Header */}
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Thank You!</h1>
@@ -112,7 +112,7 @@ export default function DonationSuccessPage() {
       </div>
 
       {/* Donation Details */}
-      <Card className="mb-6">
+      <Card className="mb-6 hover:shadow-lg transition-shadow duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-red-500" />
@@ -160,7 +160,7 @@ export default function DonationSuccessPage() {
       </Card>
 
       {/* Receipt Download */}
-      <Card className="mb-6">
+      <Card className="mb-6 hover:shadow-lg transition-shadow duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Download className="h-5 w-5" />
@@ -198,7 +198,7 @@ export default function DonationSuccessPage() {
             fileName={`receipt-${donationData.receiptNumber}.pdf`}
           >
             {({ loading }) => (
-              <Button className="w-full" disabled={loading}>
+              <Button className="w-full hover:shadow-lg transition-all duration-300 hover:scale-[1.02]  border-2" disabled={loading}>
                 <Download className="h-4 w-4 mr-2" />
                 {loading ? 'Generating Receipt...' : 'Download Receipt'}
               </Button>
@@ -208,14 +208,14 @@ export default function DonationSuccessPage() {
       </Card>
 
       {/* Next Steps */}
-      <Card className="mb-6">
+      <Card className="mb-6 hover:shadow-lg transition-shadow duration-300">
         <CardHeader>
           <CardTitle>What's Next?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-semibold text-blue-600">1</span>
+            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
+              <span className="text-xs font-semibold text-white">1</span>
             </div>
             <div>
               <p className="font-medium">Receipt sent to your email</p>
@@ -226,8 +226,8 @@ export default function DonationSuccessPage() {
           </div>
           
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-semibold text-blue-600">2</span>
+            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
+              <span className="text-xs font-semibold text-white">2</span>
             </div>
             <div>
               <p className="font-medium">Track your impact</p>
@@ -238,8 +238,8 @@ export default function DonationSuccessPage() {
           </div>
           
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-semibold text-blue-600">3</span>
+            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
+              <span className="text-xs font-semibold text-white">3</span>
             </div>
             <div>
               <p className="font-medium">Stay updated</p>
@@ -253,13 +253,13 @@ export default function DonationSuccessPage() {
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <Button asChild className="flex-1">
+        <Button asChild className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] group">
           <Link href={`/campaigns/${donationData.campaignId}`}>
-            <ArrowRight className="h-4 w-4 mr-2" />
+            <ArrowRight className="h-4 w-4 mr-2 group-hover:translate-x-1 transition-transform" />
             View Campaign
           </Link>
         </Button>
-        <Button variant="outline" asChild className="flex-1">
+        <Button variant="outline" asChild className="flex-1 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
           <Link href="/donor/profile">
             View My Donations
           </Link>

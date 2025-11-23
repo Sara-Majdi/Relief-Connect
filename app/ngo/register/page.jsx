@@ -387,7 +387,7 @@ export default function NGORegisterPage() {
             </div>
           </CardContent>
           <CardFooter className="flex justify-end bg-gray-50">
-            <Button onClick={() => setStep(2)} className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all px-8">Continue</Button>
+            <Button onClick={() => setStep(2)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all px-8">Continue</Button>
           </CardFooter>
         </Card>
       )}
@@ -526,7 +526,7 @@ export default function NGORegisterPage() {
 
           <CardFooter className="flex justify-between bg-gray-50">
             <Button variant="outline" onClick={() => setStep(1)} className="hover:bg-gray-100 hover:border-gray-400 transition-colors border-2">Back</Button>
-            <Button onClick={() => setStep(3)} className="bg-yellow-600 hover:bg-yellow-700 shadow-md hover:shadow-lg transition-all px-8">Continue</Button>
+            <Button onClick={() => setStep(3)} className="bg-yellow-600 hover:bg-yellow-700 text-white shadow-md hover:shadow-lg transition-all px-8">Continue</Button>
           </CardFooter>
         </Card>
       )}
@@ -624,7 +624,7 @@ export default function NGORegisterPage() {
           <CardFooter className="flex justify-between bg-gray-50">
             <Button variant="outline" onClick={() => setStep(2)} className="hover:bg-gray-100 hover:border-gray-400 transition-colors border-2">Back</Button>
             <Button
-              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 shadow-lg hover:shadow-xl transition-all px-8"
+              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white s shadow-lg hover:shadow-xl transition-all px-8"
               onClick={handleSubmit}
               disabled={submitting}
             >
