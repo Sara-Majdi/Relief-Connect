@@ -739,7 +739,7 @@ export default function NGODashboard() {
 
       {/* Campaign Analytics Sheet */}
       <Sheet open={isCampaignAnalyticsOpen} onOpenChange={setIsCampaignAnalyticsOpen}>
-        <SheetContent className="bg-white w-full sm:max-w-2xl overflow-y-auto">
+        <SheetContent className="bg-white w-full sm:max-w-2xl overflow-y-auto p-4">
           {selectedCampaign && (
             <>
               <SheetHeader>
@@ -855,7 +855,7 @@ export default function NGODashboard() {
                       setIsAddUpdateOpen(true)
                     }}
                   >
-                    <MessageSquare className="h-4 w-4 mr-2" />
+                    <MessageSquare className="h-4 w-4 mr-2 text-white" />
                     Post Update
                   </Button>
                   <Button

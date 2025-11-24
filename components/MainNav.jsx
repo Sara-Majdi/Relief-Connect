@@ -70,21 +70,25 @@ export function MainNav() {
 
     // Listen for Supabase auth changes (for donors)
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // First check if there's an NGO session - if so, ignore Supabase auth changes
+      const ngoCheck = await fetch('/api/auth/check-session')
+      const ngoData = await ngoCheck.json()
+
+      if (ngoData.isAuthenticated) {
+        // NGO session takes precedence - ignore Supabase auth changes
+        return
+      }
+
       // Only update if it's a donor session (NGO uses cookies, not Supabase Auth)
       if (session?.user) {
         setUser(session.user)
         setUserRole('donor')
         setOrganizationName(null)
       } else if (!session) {
-        // Check if there's still an NGO session
-        const ngoCheck = await fetch('/api/auth/check-session')
-        const ngoData = await ngoCheck.json()
-        
-        if (!ngoData.isAuthenticated) {
-          setUser(null)
-          setUserRole(null)
-          setOrganizationName(null)
-        }
+        // No sessions at all
+        setUser(null)
+        setUserRole(null)
+        setOrganizationName(null)
       }
     })
     
