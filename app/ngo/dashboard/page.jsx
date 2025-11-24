@@ -494,8 +494,8 @@ export default function NGODashboard() {
             </div>
             <Dialog open={isAddUpdateOpen} onOpenChange={setIsAddUpdateOpen}>
               <DialogTrigger asChild>
-                <Button disabled={campaigns.length === 0} className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all">
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button disabled={campaigns.length === 0} className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all text-white">
+                  <Plus className="h-4 w-4 mr-2 text-white" />
                   Post Update
                 </Button>
               </DialogTrigger>

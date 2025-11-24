@@ -87,14 +87,7 @@ export default function CreateCampaignPage() {
     imagePreview: null,
 
     // New Media Array for multiple files
-    media: [],
-
-    // Financial Breakdown
-    financialBreakdown: [
-      { category: "Emergency Supplies", allocated: "", spent: "0" },
-      { category: "Transportation", allocated: "", spent: "0" },
-      { category: "Administrative", allocated: "", spent: "0" }
-    ]
+    media: []
   })
 
   // Fundraising Items (monetary allocation per item)
@@ -176,36 +169,6 @@ export default function CreateCampaignPage() {
     }
   };
 
-  const handleGenerateFinancialCategories = async () => {
-    if (!formData.disaster || !formData.goal) {
-      setError('Please select disaster type and set a funding goal first');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/ai/generate-financial-categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          disaster: formData.disaster,
-          totalGoal: parseFloat(formData.goal) || 0,
-        }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setFormData(prev => ({
-          ...prev,
-          financialBreakdown: data.categories,
-        }));
-      } else {
-        throw new Error(data.error || 'Failed to generate categories');
-      }
-    } catch (error) {
-      console.error('Error generating financial categories:', error);
-      setError('Failed to generate financial categories. Please try again.');
-    }
-  };
-
   const handleGenerateFundraisingItems = async () => {
     if (!formData.disaster) {
       setError('Please select disaster type first');
@@ -239,32 +202,6 @@ export default function CreateCampaignPage() {
       [field]: value
     }))
   }
-
-  const handleFinancialBreakdownChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      financialBreakdown: prev.financialBreakdown.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }))
-  }
-
-  //Adding new row to the table
-  const addFinancialCategory = () => {
-    setFormData(prev => ({
-      ...prev,
-      financialBreakdown: [...prev.financialBreakdown, { category: "", allocated: "", spent: "0" }]
-    }))
-  }
-
-  //Remove row from the table
-  const removeFinancialCategory = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      financialBreakdown: prev.financialBreakdown.filter((_, i) => i !== index)
-    }))
-  }
-
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0]
@@ -426,7 +363,6 @@ export default function CreateCampaignPage() {
         beneficiaries: Number(formData.beneficiaries),
         image_url: imageUrl,
         verified: false,
-        financial_breakdown: formData.financialBreakdown.filter(item => item.category && item.allocated),
         donors: 0,
         ngo_user_id: formData.ngo_user_id, // Use NGO user ID from session
         ngo: formData.ngo
@@ -569,7 +505,7 @@ export default function CreateCampaignPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1.5 rounded-lg h-14 shadow-sm border border-gray-200">
+        <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1.5 rounded-lg h-14 shadow-sm border border-gray-200">
           <TabsTrigger
             value="basic"
             className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
@@ -584,14 +520,6 @@ export default function CreateCampaignPage() {
           >
             <Calendar className="h-4 w-4" />
             Campaign Details
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="finances"
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
-          >
-            <DollarSign className="h-4 w-4" />
-            Finances
           </TabsTrigger>
 
           <TabsTrigger
@@ -794,89 +722,6 @@ export default function CreateCampaignPage() {
           </Card>
         </TabsContent>
 
-        {/* Financial Breakdown Tab */}
-        <TabsContent value="finances" className="space-y-6">
-          <Card className="shadow-lg border-l-4 border-l-purple-500 hover:shadow-xl transition-shadow duration-200">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-purple-600" />
-                    </div>
-                    Financial Breakdown
-                  </CardTitle>
-                  <CardDescription>How will the funds be allocated?</CardDescription>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateFinancialCategories}
-                  disabled={!formData.disaster || !formData.goal}
-                  className="hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-colors"
-                >
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  AI Suggest
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.financialBreakdown.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border-2 border-purple-100 rounded-lg bg-purple-50/30 hover:border-purple-300 transition-colors">
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Input
-                      placeholder="e.g., Emergency Supplies"
-                      value={item.category}
-                      onChange={(e) => handleFinancialBreakdownChange(index, 'category', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Allocated Amount (RM)</Label>
-                    <Input
-                      type="number"
-                      placeholder="50000"
-                      value={item.allocated}
-                      onChange={(e) => handleFinancialBreakdownChange(index, 'allocated', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Spent Amount (RM)</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={item.spent}
-                        onChange={(e) => handleFinancialBreakdownChange(index, 'spent', e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeFinancialCategory(index)}
-                        disabled={formData.financialBreakdown.length === 1}
-                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addFinancialCategory}
-                className="w-full hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-colors border-2"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Financial Category
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Fundraising Items Tab */}
         <TabsContent value="fundraising" className="space-y-6">
           <Card className="shadow-lg border-l-4 border-l-green-500 hover:shadow-xl transition-shadow duration-200">
@@ -927,7 +772,7 @@ export default function CreateCampaignPage() {
           <Button
             variant="outline"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances', 'fundraising', 'items']
+              const tabs = ['basic', 'details', 'fundraising']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex > 0) {
                 setActiveTab(tabs[currentIndex - 1])
@@ -941,7 +786,7 @@ export default function CreateCampaignPage() {
           <Button
             className="bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances', 'fundraising', 'items']
+              const tabs = ['basic', 'details', 'fundraising']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex < tabs.length - 1) {
                 setActiveTab(tabs[currentIndex + 1])
@@ -951,7 +796,7 @@ export default function CreateCampaignPage() {
             }}
             disabled={submitting}
           >
-            {submitting ? "Creating..." : activeTab === 'items' ? "Create Campaign" : "Next"}
+            {submitting ? "Creating..." : activeTab === 'fundraising' ? "Create Campaign" : "Next"}
           </Button>
         </div>
       </div>

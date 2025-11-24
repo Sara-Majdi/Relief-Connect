@@ -538,7 +538,7 @@ export default function CampaignDetailPage({ params }) {
       {/* Detailed Tabs */}
       <div className="container mx-auto w-full px-4 md:px-6 pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 bg-white shadow-lg border-0 h-14 p-1.5">
+          <TabsList className="grid w-full grid-cols-5 bg-white shadow-lg border-0 h-14 p-1.5">
             <TabsTrigger
               value="overview"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
@@ -562,12 +562,6 @@ export default function CampaignDetailPage({ params }) {
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
             >
               Breakdown
-            </TabsTrigger>
-            <TabsTrigger
-              value="finances"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all rounded-lg font-medium text-xs md:text-sm"
-            >
-              Finances
             </TabsTrigger>
             <TabsTrigger
               value="impact"
@@ -708,94 +702,6 @@ export default function CampaignDetailPage({ params }) {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
-
-          <TabsContent value="finances" className="space-y-6">
-            <Card className="shadow-lg border-0">
-              <CardHeader className="border-b bg-gradient-to-r from-green-50 to-blue-50">
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <DollarSign className="h-5 w-5 text-green-600" />
-                  </div>
-                  Financial Transparency
-                </CardTitle>
-                <CardDescription>See how donations are being allocated and spent</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {campaign.financialBreakdown && campaign.financialBreakdown.length > 0 ? (
-                  <div className="space-y-6">
-                    {campaign.financialBreakdown.map((category, index) => (
-                      <div key={index} className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-lg text-gray-900">{category.category}</span>
-                          <span className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-full shadow-sm">
-                            RM {(category.spent || 0).toLocaleString()} / RM {(category.allocated || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
-                          <div
-                            className="bg-gradient-to-r from-green-600 to-blue-600 h-3 rounded-full transition-all duration-500"
-                            style={{ width: `${category.allocated ? Math.min(((category.spent || 0) / category.allocated) * 100, 100) : 0}%` }}
-                          />
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {category.allocated ? Math.round(((category.spent || 0) / category.allocated) * 100) : 0}% utilized
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <DollarSign className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 text-lg">Financial breakdown not yet available.</p>
-                    <p className="text-gray-400 text-sm mt-2">Will be updated as the campaign progresses.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-lg border-0">
-              <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50">
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Download className="h-5 w-5 text-purple-600" />
-                  </div>
-                  Financial Documents
-                </CardTitle>
-                <CardDescription>Download detailed financial reports and documentation</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {campaign.financialDocuments && campaign.financialDocuments.length > 0 ? (
-                  <div className="space-y-3">
-                    {campaign.financialDocuments.map((doc, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className="w-full justify-start border-2 hover:bg-purple-50 hover:border-purple-300 transition-colors"
-                        asChild
-                      >
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer" download>
-                          <Download className="h-4 w-4 mr-2" />
-                          {doc.name || doc.title}
-                        </a>
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Download className="h-8 w-8 text-purple-400" />
-                    </div>
-                    <p className="text-gray-500 text-lg">No financial documents available yet.</p>
-                    <p className="text-gray-400 text-sm mt-2">
-                      Documents will be uploaded as the campaign progresses.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="impact" className="space-y-6">

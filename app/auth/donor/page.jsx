@@ -42,15 +42,21 @@ function DonorAuthPageContent() {
 
       if (result?.error) {
         setError(result.error)
+        setLoading(false)
       } else if (result?.success) {
         setSuccess(result.success)
         // If sign-in is successful, it will redirect automatically
         // If sign-up is successful, show the success message
+        setLoading(false)
       }
     } catch (err) {
+      // Next.js redirects throw a special error - don't treat it as an error
+      if (err?.message?.includes('NEXT_REDIRECT')) {
+        // This is a successful redirect, don't show error
+        return
+      }
       console.error('Auth error:', err)
       setError('An unexpected error occurred. Please try again.')
-    } finally {
       setLoading(false)
     }
   }
@@ -132,7 +138,17 @@ function DonorAuthPageContent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {!isSignUp && (
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-xs text-rose-600 hover:text-rose-700 font-medium"
+                    >
+                      Forgot password?
+                    </Link>
+                  )}
+                </div>
                 <div className="relative">
                   <Input
                     id="password"
