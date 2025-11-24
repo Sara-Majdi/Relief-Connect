@@ -6,12 +6,26 @@ import { ChevronLeft, ChevronRight, X, Play, Pause } from "lucide-react"
 import Image from "next/image"
 
 export default function MediaCarousel({ media = [], className = "" }) {
+  // Sort media array to put primary image first
+  const sortedMedia = [...media].sort((a, b) => {
+    // Primary media comes first
+    if (a.is_primary && !b.is_primary) return -1
+    if (!a.is_primary && b.is_primary) return 1
+    // Otherwise maintain original order (by display_order)
+    return (a.display_order || 0) - (b.display_order || 0)
+  })
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isPlaying, setIsPlaying] = useState({})
   const [videoLoading, setVideoLoading] = useState({})
 
-  if (!media || media.length === 0) {
+  // Reset to first image when media changes
+  useEffect(() => {
+    setCurrentIndex(0)
+  }, [media])
+
+  if (!sortedMedia || sortedMedia.length === 0) {
     return (
       <div className="relative w-full h-72 md:h-96 bg-gray-200 rounded-xl overflow-hidden flex items-center justify-center">
         <Image
@@ -24,14 +38,14 @@ export default function MediaCarousel({ media = [], className = "" }) {
     )
   }
 
-  const currentMedia = media[currentIndex]
+  const currentMedia = sortedMedia[currentIndex]
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % media.length)
+    setCurrentIndex((prev) => (prev + 1) % sortedMedia.length)
   }
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + media.length) % media.length)
+    setCurrentIndex((prev) => (prev - 1 + sortedMedia.length) % sortedMedia.length)
   }
 
   const goToIndex = (index) => {
@@ -117,7 +131,7 @@ export default function MediaCarousel({ media = [], className = "" }) {
           <MediaContent media={currentMedia} index={currentIndex} />
 
           {/* Navigation Arrows */}
-          {media.length > 1 && (
+          {sortedMedia.length > 1 && (
             <>
               <Button
                 variant="secondary"
@@ -141,9 +155,9 @@ export default function MediaCarousel({ media = [], className = "" }) {
           )}
 
           {/* Media Counter */}
-          {media.length > 1 && (
+          {sortedMedia.length > 1 && (
             <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium">
-              {currentIndex + 1} / {media.length}
+              {currentIndex + 1} / {sortedMedia.length}
             </div>
           )}
 
@@ -159,10 +173,10 @@ export default function MediaCarousel({ media = [], className = "" }) {
         </div>
 
         {/* Thumbnail Navigation */}
-        {media.length > 1 && (
+        {sortedMedia.length > 1 && (
           <div className="bg-black/90 p-4">
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-              {media.map((item, index) => (
+              {sortedMedia.map((item, index) => (
                 <button
                   key={index}
                   onClick={() => goToIndex(index)}
@@ -215,14 +229,14 @@ export default function MediaCarousel({ media = [], className = "" }) {
           </Button>
 
           {/* Media Counter */}
-          {media.length > 1 && (
+          {sortedMedia.length > 1 && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium z-10">
-              {currentIndex + 1} / {media.length}
+              {currentIndex + 1} / {sortedMedia.length}
             </div>
           )}
 
           {/* Navigation Arrows */}
-          {media.length > 1 && (
+          {sortedMedia.length > 1 && (
             <>
               <Button
                 variant="secondary"
@@ -249,10 +263,10 @@ export default function MediaCarousel({ media = [], className = "" }) {
           </div>
 
           {/* Thumbnail Navigation in Fullscreen */}
-          {media.length > 1 && (
+          {sortedMedia.length > 1 && (
             <div className="absolute bottom-0 left-0 right-0 bg-black/90 p-4">
               <div className="flex gap-2 overflow-x-auto pb-2 justify-center scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                {media.map((item, index) => (
+                {sortedMedia.map((item, index) => (
                   <button
                     key={index}
                     onClick={() => goToIndex(index)}

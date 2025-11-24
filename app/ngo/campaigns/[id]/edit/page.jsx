@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { AIInput } from "@/components/ui/ai-input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { AITextarea } from "@/components/ui/ai-textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
-import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package, Loader2 } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Upload, MapPin, Calendar, Users, DollarSign, Package, Loader2, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import MediaUploader from "@/components/campaign/MediaUploader"
+import ItemAllocationForm from "@/components/campaign/ItemAllocationForm"
 
 export default function EditCampaignPage({ params }) {
   const router = useRouter()
@@ -55,6 +58,142 @@ export default function EditCampaignPage({ params }) {
 
   const [mediaToDelete, setMediaToDelete] = useState([])
 
+  // Fundraising Items (monetary allocation per item)
+  const [fundraisingItems, setFundraisingItems] = useState([])
+
+  // AI Helper Functions
+  const handleGenerateTitles = async () => {
+    try {
+      const response = await fetch('/api/ai/generate-titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          location: formData.location,
+          state: formData.state,
+          urgency: formData.urgency,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data.titles;
+      }
+      throw new Error(data.error || 'Failed to generate titles');
+    } catch (error) {
+      console.error('Error generating titles:', error);
+      setError('Failed to generate AI suggestions. Please try again.');
+      return [];
+    }
+  };
+
+  const handleGenerateDescription = async (type) => {
+    try {
+      const response = await fetch('/api/ai/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          location: formData.location,
+          state: formData.state,
+          urgency: formData.urgency,
+          beneficiaries: formData.beneficiaries,
+          goal: formData.goal,
+          title: formData.title,
+          type,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data.description;
+      }
+      throw new Error(data.error || 'Failed to generate description');
+    } catch (error) {
+      console.error('Error generating description:', error);
+      setError('Failed to generate AI content. Please try again.');
+      return '';
+    }
+  };
+
+  const handlePolishCopy = async (text, tone = 'professional') => {
+    try {
+      const response = await fetch('/api/ai/polish-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          tone,
+          context: 'campaign description',
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return data.polished;
+      }
+      throw new Error(data.error || 'Failed to polish copy');
+    } catch (error) {
+      console.error('Error polishing copy:', error);
+      setError('Failed to polish text. Please try again.');
+      return text;
+    }
+  };
+
+  const handleGenerateFinancialCategories = async () => {
+    if (!formData.disaster || !formData.goal) {
+      setError('Please select disaster type and set a funding goal first');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ai/generate-financial-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          totalGoal: parseFloat(formData.goal) || 0,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setFormData(prev => ({
+          ...prev,
+          financialBreakdown: data.categories,
+        }));
+      } else {
+        throw new Error(data.error || 'Failed to generate categories');
+      }
+    } catch (error) {
+      console.error('Error generating financial categories:', error);
+      setError('Failed to generate financial categories. Please try again.');
+    }
+  };
+
+  const handleGenerateFundraisingItems = async () => {
+    if (!formData.disaster) {
+      setError('Please select disaster type first');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ai/generate-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          disaster: formData.disaster,
+          count: 5,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setFundraisingItems(data.items);
+      } else {
+        throw new Error(data.error || 'Failed to generate items');
+      }
+    } catch (error) {
+      console.error('Error generating fundraising items:', error);
+      setError('Failed to generate fundraising items. Please try again.');
+    }
+  };
+
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
@@ -83,6 +222,30 @@ export default function EditCampaignPage({ params }) {
             .order('display_order', { ascending: true })
 
           const existingMedia = mediaData || []
+
+          // Fetch existing fundraising items
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('campaign_items')
+            .select('*')
+            .eq('campaign_id', params.id)
+            .order('display_order', { ascending: true })
+
+          if (itemsData) {
+            setFundraisingItems(itemsData.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              target_amount: item.target_amount,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              priority: item.priority,
+              category: item.category,
+              image_url: item.image_url,
+              display_order: item.display_order,
+              current_amount: item.current_amount,
+              is_active: item.is_active
+            })))
+          }
 
           setFormData({
             title: data.title || "",
@@ -285,13 +448,19 @@ export default function EditCampaignPage({ params }) {
         }
       }
 
+      // First, unset all existing primary flags for this campaign
+      await supabase
+        .from('campaign_media')
+        .update({ is_primary: false })
+        .eq('campaign_id', params.id)
+
       // Update existing media (for primary flag and order changes)
       const existingMediaToUpdate = formData.media.filter(m => m.existing && m.id)
       for (const mediaItem of existingMediaToUpdate) {
         const { error: updateError } = await supabase
           .from('campaign_media')
           .update({
-            is_primary: mediaItem.isPrimary,
+            is_primary: mediaItem.isPrimary || false,
             display_order: mediaItem.displayOrder
           })
           .eq('id', mediaItem.id)
@@ -323,6 +492,32 @@ export default function EditCampaignPage({ params }) {
         imageUrl = publicUrl
       }
 
+      // After all media operations, query the database to find the primary image
+      // This ensures we always use the most up-to-date primary image
+      const { data: primaryMedia } = await supabase
+        .from('campaign_media')
+        .select('media_url')
+        .eq('campaign_id', params.id)
+        .eq('is_primary', true)
+        .maybeSingle()
+
+      if (primaryMedia && primaryMedia.media_url) {
+        imageUrl = primaryMedia.media_url
+      } else if (!imageUrl) {
+        // If no primary image is set in campaign_media, keep existing image_url or use first media
+        const { data: firstMedia } = await supabase
+          .from('campaign_media')
+          .select('media_url')
+          .eq('campaign_id', params.id)
+          .order('display_order', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+        if (firstMedia) {
+          imageUrl = firstMedia.media_url
+        }
+      }
+
       // Update campaign
       const { error: updateError } = await supabase
         .from("campaigns")
@@ -344,6 +539,73 @@ export default function EditCampaignPage({ params }) {
         .eq("id", params.id)
 
       if (updateError) throw updateError
+
+      // Handle fundraising items updates
+      // First, get existing items to determine which ones were deleted
+      const { data: existingItems, error: fetchItemsError } = await supabase
+        .from('campaign_items')
+        .select('id')
+        .eq('campaign_id', params.id)
+
+      const existingItemIds = (existingItems || []).map(item => item.id)
+      const currentItemIds = fundraisingItems.filter(item => item.id).map(item => item.id)
+      const deletedItemIds = existingItemIds.filter(id => !currentItemIds.includes(id))
+
+      // Delete removed items
+      if (deletedItemIds.length > 0) {
+        const { error: deleteItemsError } = await supabase
+          .from('campaign_items')
+          .delete()
+          .in('id', deletedItemIds)
+
+        if (deleteItemsError) {
+          console.error('Error deleting fundraising items:', deleteItemsError)
+        }
+      }
+
+      // Update or insert fundraising items
+      for (const item of fundraisingItems) {
+        // Skip items without name or target amount
+        if (!item.name || !item.target_amount || parseFloat(item.target_amount) <= 0) {
+          continue
+        }
+
+        const itemData = {
+          campaign_id: params.id,
+          name: item.name,
+          description: item.description || null,
+          target_amount: parseFloat(item.target_amount),
+          quantity: item.quantity ? parseInt(item.quantity) : null,
+          unit_cost: item.unit_cost ? parseFloat(item.unit_cost) : null,
+          priority: item.priority || 'medium',
+          category: item.category || null,
+          image_url: item.image_url || null,
+          display_order: item.display_order || 0,
+          current_amount: item.current_amount || 0,
+          is_active: item.is_active !== undefined ? item.is_active : true
+        }
+
+        if (item.id) {
+          // Update existing item
+          const { error: updateItemError } = await supabase
+            .from('campaign_items')
+            .update(itemData)
+            .eq('id', item.id)
+
+          if (updateItemError) {
+            console.error('Failed to update fundraising item:', item.name, updateItemError)
+          }
+        } else {
+          // Insert new item
+          const { error: insertItemError } = await supabase
+            .from('campaign_items')
+            .insert([itemData])
+
+          if (insertItemError) {
+            console.error('Failed to create fundraising item:', item.name, insertItemError)
+          }
+        }
+      }
 
       // Redirect to campaign detail page
       router.push(`/campaigns/${params.id}`)
@@ -415,7 +677,7 @@ export default function EditCampaignPage({ params }) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1.5 rounded-lg h-14 shadow-sm border border-gray-200">
+        <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1.5 rounded-lg h-14 shadow-sm border border-gray-200">
           <TabsTrigger
             value="basic"
             className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
@@ -423,6 +685,7 @@ export default function EditCampaignPage({ params }) {
             <MapPin className="h-4 w-4" />
             Basic Info
           </TabsTrigger>
+
           <TabsTrigger
             value="details"
             className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
@@ -430,6 +693,7 @@ export default function EditCampaignPage({ params }) {
             <Calendar className="h-4 w-4" />
             Campaign Details
           </TabsTrigger>
+
           <TabsTrigger
             value="finances"
             className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
@@ -437,6 +701,15 @@ export default function EditCampaignPage({ params }) {
             <DollarSign className="h-4 w-4" />
             Finances
           </TabsTrigger>
+
+          <TabsTrigger
+            value="fundraising"
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:font-semibold transition-all duration-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Fundraising Items
+          </TabsTrigger>
+
         </TabsList>
 
         {/* Basic Information Tab */}
@@ -455,11 +728,12 @@ export default function EditCampaignPage({ params }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Campaign Title *</Label>
-                  <Input
+                  <AIInput
                     id="title"
                     placeholder="e.g., Pahang Flood Relief 2024"
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
+                    onGenerate={handleGenerateTitles}
                   />
                 </div>
                 <div className="space-y-2">
@@ -482,23 +756,27 @@ export default function EditCampaignPage({ params }) {
 
               <div className="space-y-2">
                 <Label htmlFor="description">Short Description *</Label>
-                <Textarea
+                <AITextarea
                   id="description"
                   placeholder="Brief description of the situation and how donations will help"
                   className="min-h-[100px]"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
+                  onGenerate={() => handleGenerateDescription('short')}
+                  onPolish={handlePolishCopy}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="longDescription">Detailed Description</Label>
-                <Textarea
+                <AITextarea
                   id="longDescription"
                   placeholder="Comprehensive description with background, impact, and detailed plans"
                   className="min-h-[200px]"
                   value={formData.longDescription}
                   onChange={(e) => handleInputChange('longDescription', e.target.value)}
+                  onGenerate={() => handleGenerateDescription('long')}
+                  onPolish={handlePolishCopy}
                 />
               </div>
 
@@ -628,13 +906,28 @@ export default function EditCampaignPage({ params }) {
         <TabsContent value="finances" className="space-y-6">
           <Card className="shadow-lg border-l-4 border-l-purple-500 hover:shadow-xl transition-shadow duration-200">
             <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <DollarSign className="h-5 w-5 text-purple-600" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <DollarSign className="h-5 w-5 text-purple-600" />
+                    </div>
+                    Financial Breakdown
+                  </CardTitle>
+                  <CardDescription>How will the funds be allocated?</CardDescription>
                 </div>
-                Financial Breakdown
-              </CardTitle>
-              <CardDescription>How will the funds be allocated?</CardDescription>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateFinancialCategories}
+                  disabled={!formData.disaster || !formData.goal}
+                  className="hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-colors"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  AI Suggest
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {formData.financialBreakdown.map((item, index) => (
@@ -691,6 +984,46 @@ export default function EditCampaignPage({ params }) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Fundraising Items Tab */}
+        <TabsContent value="fundraising" className="space-y-6">
+          <Card className="shadow-lg border-l-4 border-l-green-500 hover:shadow-xl transition-shadow duration-200">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-white">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-green-600" />
+                    </div>
+                    Fundraising Items (Optional)
+                  </CardTitle>
+                  <CardDescription>
+                    Break down your campaign goal into specific items for transparent fundraising.
+                    Donors can choose to fund specific items or donate to the general campaign.
+                  </CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateFundraisingItems}
+                  disabled={!formData.disaster}
+                  className="hover:bg-green-50 hover:text-green-600 hover:border-green-300 transition-colors shrink-0"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  AI Suggest Items
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ItemAllocationForm
+                campaignGoal={parseFloat(formData.goal) || 0}
+                items={fundraisingItems}
+                onChange={setFundraisingItems}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Action Buttons */}
@@ -702,7 +1035,7 @@ export default function EditCampaignPage({ params }) {
           <Button
             variant="outline"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances']
+              const tabs = ['basic', 'details', 'finances', 'fundraising']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex > 0) {
                 setActiveTab(tabs[currentIndex - 1])
@@ -716,7 +1049,7 @@ export default function EditCampaignPage({ params }) {
           <Button
             className="bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
             onClick={() => {
-              const tabs = ['basic', 'details', 'finances']
+              const tabs = ['basic', 'details', 'finances', 'fundraising']
               const currentIndex = tabs.indexOf(activeTab)
               if (currentIndex < tabs.length - 1) {
                 setActiveTab(tabs[currentIndex + 1])
@@ -726,7 +1059,7 @@ export default function EditCampaignPage({ params }) {
             }}
             disabled={submitting}
           >
-            {submitting ? "Updating..." : activeTab === 'finances' ? "Update Campaign" : "Next"}
+            {submitting ? "Updating..." : activeTab === 'fundraising' ? "Update Campaign" : "Next"}
           </Button>
         </div>
       </div>
