@@ -43,11 +43,9 @@ export default function CampaignsPage() {
                         raised: Number(c.raised ?? 0),
                         goal: Number(c.goal ?? 0),
                         imageUrl: c.image_url ?? c.image ?? "/placeholder.svg",
-                        status: c.urgency === "critical" ? "Critical" : c.urgency === "urgent" ? "Urgent" : undefined,
                         ngoVerified: Boolean(c.verified),
                         type: c.disaster,
                         created_at: c.created_at,
-                        urgency: c.urgency,
                     }))
                     setCampaigns(mapped)
                 }
@@ -85,9 +83,6 @@ export default function CampaignsPage() {
             switch (sortBy) {
                 case "newest":
                     return new Date(b.created_at) - new Date(a.created_at)
-                case "urgent":
-                    const urgencyOrder = { "critical": 3, "urgent": 2, "normal": 1 }
-                    return (urgencyOrder[b.urgency] || 1) - (urgencyOrder[a.urgency] || 1)
                 case "progress":
                     const progressA = (a.raised / a.goal) * 100
                     const progressB = (b.raised / b.goal) * 100
@@ -166,15 +161,6 @@ export default function CampaignsPage() {
                     */}
                     <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/95 backdrop-blur">
                         <CardContent className="pt-6">
-                            <div className="text-3xl font-bold text-orange-600 mb-1">
-                                {filteredCampaigns.filter(c => c.urgency === "critical" || c.urgency === "urgent").length}
-                            </div>
-                            <div className="text-sm text-gray-600">Urgent Cases</div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/95 backdrop-blur">
-                        <CardContent className="pt-6">
                             <div className="text-3xl font-bold text-purple-600 mb-1">
                                 RM {filteredCampaigns.reduce((sum, c) => sum + c.raised, 0).toLocaleString()}
                             </div>
@@ -200,7 +186,6 @@ export default function CampaignsPage() {
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
                                         <SelectItem value="newest">Newest First</SelectItem>
-                                        <SelectItem value="urgent">Most Urgent</SelectItem>
                                         <SelectItem value="progress">Progress</SelectItem>
                                         <SelectItem value="goal">Funding Goal</SelectItem>
                                     </SelectContent>
@@ -270,16 +255,6 @@ export default function CampaignsPage() {
                                         unoptimized
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    {campaign.status === "Urgent" && (
-                                        <Badge className="absolute top-3 right-3 bg-blue-600 shadow-lg animate-pulse">
-                                            <Clock className="mr-1 h-3 w-3" /> Urgent
-                                        </Badge>
-                                    )}
-                                    {campaign.status === "Critical" && (
-                                        <Badge className="absolute top-3 right-3 bg-red-600 shadow-lg animate-pulse">
-                                            <AlertTriangle className="mr-1 h-3 w-3" /> Critical
-                                        </Badge>
-                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent className="p-6">

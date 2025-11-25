@@ -86,7 +86,6 @@ export default function CampaignDetailPage({ params }) {
             raised: data.raised || 0,
             goal: data.goal,
             donors: data.donors || 0,
-            urgency: data.urgency,
             disaster: data.disaster,
             state: data.state,
             verified: data.verified || false,
@@ -175,7 +174,6 @@ export default function CampaignDetailPage({ params }) {
               raised: data.raised || 0,
               goal: data.goal,
               donors: data.donors || 0,
-              urgency: data.urgency,
               disaster: data.disaster,
               state: data.state,
               verified: data.verified || false,
@@ -307,16 +305,6 @@ export default function CampaignDetailPage({ params }) {
               {campaignMedia.length > 0 ? (
                 <div className="relative">
                   <MediaCarousel media={campaignMedia} className="w-full" />
-                  {campaign.urgency === "urgent" && (
-                    <Badge className="absolute top-4 right-4 bg-blue-600 shadow-lg animate-pulse text-base px-4 py-2 z-10">
-                      <Clock className="mr-2 h-4 w-4" /> Urgent
-                    </Badge>
-                  )}
-                  {campaign.urgency === "critical" && (
-                    <Badge className="absolute top-4 right-4 bg-red-600 shadow-lg animate-pulse text-base px-4 py-2 z-10">
-                      <AlertTriangle className="mr-2 h-4 w-4" /> Critical
-                    </Badge>
-                  )}
                 </div>
               ) : (
                 <div className="relative rounded-xl overflow-hidden shadow-2xl group">
@@ -330,16 +318,6 @@ export default function CampaignDetailPage({ params }) {
                     unoptimized
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                  {campaign.urgency === "urgent" && (
-                    <Badge className="absolute top-4 right-4 bg-blue-600 shadow-lg animate-pulse text-base px-4 py-2">
-                      <Clock className="mr-2 h-4 w-4" /> Urgent
-                    </Badge>
-                  )}
-                  {campaign.urgency === "critical" && (
-                    <Badge className="absolute top-4 right-4 bg-red-600 shadow-lg animate-pulse text-base px-4 py-2">
-                      <AlertTriangle className="mr-2 h-4 w-4" /> Critical
-                    </Badge>
-                  )}
                 </div>
               )}
             </div>

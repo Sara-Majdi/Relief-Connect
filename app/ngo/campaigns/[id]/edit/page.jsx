@@ -33,7 +33,6 @@ export default function EditCampaignPage({ params }) {
     description: "",
     longDescription: "",
     disaster: "",
-    urgency: "",
     state: "",
     location: "",
     
@@ -68,7 +67,6 @@ export default function EditCampaignPage({ params }) {
           disaster: formData.disaster,
           location: formData.location,
           state: formData.state,
-          urgency: formData.urgency,
         }),
       });
       const data = await response.json();
@@ -92,7 +90,6 @@ export default function EditCampaignPage({ params }) {
           disaster: formData.disaster,
           location: formData.location,
           state: formData.state,
-          urgency: formData.urgency,
           beneficiaries: formData.beneficiaries,
           goal: formData.goal,
           title: formData.title,
@@ -219,7 +216,6 @@ export default function EditCampaignPage({ params }) {
             description: data.description || "",
             longDescription: data.long_description || "",
             disaster: data.disaster || "",
-            urgency: data.urgency || "",
             state: data.state || "",
             location: data.location || "",
             startDate: data.start_date || "",
@@ -274,7 +270,7 @@ export default function EditCampaignPage({ params }) {
 
   const validateForm = () => {
     const required = [
-      'title', 'description', 'disaster', 'urgency', 'state', 
+      'title', 'description', 'disaster', 'state',
       'location', 'startDate', 'targetDate', 'goal', 'beneficiaries'
     ]
     
@@ -464,7 +460,6 @@ export default function EditCampaignPage({ params }) {
           description: formData.description,
           long_description: formData.longDescription,
           goal: Number(formData.goal),
-          urgency: formData.urgency,
           disaster: formData.disaster,
           state: formData.state,
           location: formData.location,
@@ -654,17 +649,15 @@ export default function EditCampaignPage({ params }) {
               <CardDescription>Essential details about your campaign</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Campaign Title *</Label>
-                  <AIInput
-                    id="title"
-                    placeholder="e.g., Pahang Flood Relief 2024"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    onGenerate={handleGenerateTitles}
-                  />
-                </div>
+              {/* Instructions */}
+              <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">
+                  Fill in the disaster type, state, and location first to use the AI title generator.
+                </p>
+              </div>
+
+              {/* Step 1: Disaster Type, State, Location */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="disaster">Disaster Type *</Label>
                   <Select value={formData.disaster} onValueChange={(value) => handleInputChange('disaster', value)}>
@@ -681,35 +674,6 @@ export default function EditCampaignPage({ params }) {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Short Description *</Label>
-                <AITextarea
-                  id="description"
-                  placeholder="Brief description of the situation and how donations will help"
-                  className="min-h-[100px]"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  onGenerate={() => handleGenerateDescription('short')}
-                  onPolish={handlePolishCopy}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="longDescription">Detailed Description</Label>
-                <AITextarea
-                  id="longDescription"
-                  placeholder="Comprehensive description with background, impact, and detailed plans"
-                  className="min-h-[200px]"
-                  value={formData.longDescription}
-                  onChange={(e) => handleInputChange('longDescription', e.target.value)}
-                  onGenerate={() => handleGenerateDescription('long')}
-                  onPolish={handlePolishCopy}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="state">State *</Label>
                   <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
@@ -747,20 +711,44 @@ export default function EditCampaignPage({ params }) {
                 </div>
               </div>
 
+              {/* Step 2: Title with AI Generator */}
               <div className="space-y-2">
-                <Label htmlFor="urgency">Urgency Level *</Label>
-                <Select value={formData.urgency} onValueChange={(value) => handleInputChange('urgency', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select urgency level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="title">Campaign Title *</Label>
+                <AIInput
+                  id="title"
+                  placeholder="e.g., Pahang Flood Relief 2024"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  onGenerate={handleGenerateTitles}
+                />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Short Description *</Label>
+                <AITextarea
+                  id="description"
+                  placeholder="Brief description of the situation and how donations will help"
+                  className="min-h-[100px]"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onGenerate={() => handleGenerateDescription('short')}
+                  onPolish={handlePolishCopy}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="longDescription">Detailed Description</Label>
+                <AITextarea
+                  id="longDescription"
+                  placeholder="Comprehensive description with background, impact, and detailed plans"
+                  className="min-h-[200px]"
+                  value={formData.longDescription}
+                  onChange={(e) => handleInputChange('longDescription', e.target.value)}
+                  onGenerate={() => handleGenerateDescription('long')}
+                  onPolish={handlePolishCopy}
+                />
+              </div>
+
             </CardContent>
           </Card>
         </TabsContent>
